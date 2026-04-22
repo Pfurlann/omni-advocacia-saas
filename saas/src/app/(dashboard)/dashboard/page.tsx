@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { OmniSpinner } from '@/components/brand'
 import { differenceInDays } from 'date-fns'
 
 // ─── Custom Tooltip para gráfico ─────────────────────────────────────────────

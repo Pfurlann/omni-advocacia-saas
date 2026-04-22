@@ -21,6 +21,7 @@ import {
   Flag, FlagOff, Pencil,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { OmniSpinner } from '@/components/brand/OmniSpinner'
 
 // ─── Paleta de cores rápidas ──────────────────────────────────────────────────
 const CORES = [

@@ -15,6 +15,7 @@ import { useEscritorio } from '@/hooks/useEscritorio'
 import { formatCurrency, formatDate, formatHoraPrazo, horaPrazoParaBanco } from '@/lib/formatters'
 import { AREA_LABELS, AREA_CORES, PRIORIDADE_CORES, TIPO_PRAZO_LABELS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { OmniSpinner } from '@/components/brand/OmniSpinner'
 import type { TipoPrazo } from '@/types/database'
 
 interface Props {

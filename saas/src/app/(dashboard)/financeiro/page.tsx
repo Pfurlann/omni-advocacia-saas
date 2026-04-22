@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { OmniSpinner } from '@/components/brand'
 
 const MODULOS = [
   { href: '/financeiro/lancamentos', label: 'Lançamentos', desc: 'Receitas, despesas e acordos parcelados', icon: LayoutList },
