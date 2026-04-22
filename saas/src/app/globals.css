@@ -1,0 +1,193 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Omni Design System ──────────────────────────────────────────────────── */
+
+    /* Surfaces */
+    --background:        48 8% 97%;      /* #F8F8F5 — fundo quente, não branco puro */
+    --foreground:        240 35% 8%;     /* #0E0E1A — quase preto */
+
+    /* Cards & panels */
+    --card:              0 0% 100%;
+    --card-foreground:   240 35% 8%;
+
+    /* Primary brand — violeta-azul sofisticado */
+    --primary:           245 82% 62%;    /* #4F52E8 */
+    --primary-foreground:0 0% 100%;
+
+    /* Secondary */
+    --secondary:         240 8% 94%;
+    --secondary-foreground: 240 35% 8%;
+
+    /* Muted */
+    --muted:             240 8% 94%;
+    --muted-foreground:  240 12% 48%;
+
+    /* Accent */
+    --accent:            245 40% 95%;
+    --accent-foreground: 245 82% 55%;
+
+    /* Destructive */
+    --destructive:       0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders */
+    --border:            240 8% 89%;
+    --input:             240 8% 89%;
+    --ring:              245 82% 62%;
+
+    /* Radius — moderno mas não exagerado */
+    --radius:            0.625rem;       /* 10px */
+
+    /* ── Omni custom tokens ─── */
+    --sidebar-bg:        240 40% 8%;     /* #0D0D18 — quase preto-azul */
+    --sidebar-border:    240 20% 13%;    /* divisórias internas do sidebar */
+    --sidebar-text:      240 15% 56%;    /* texto inativo */
+    --sidebar-text-active: 0 0% 100%;
+    --sidebar-item-active: 240 25% 14%; /* fundo do item ativo */
+
+    --gold:              40 62% 54%;     /* #C9A84C — toque premium, use com moderação */
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar global — discreta */
+  ::-webkit-scrollbar        { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: hsl(240 8% 82%); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(240 12% 68%); }
+}
+
+/* ── Kanban horizontal scroll ────────────────────────────────────────────── */
+.kanban-scroll::-webkit-scrollbar        { height: 5px; }
+.kanban-scroll::-webkit-scrollbar-track  { background: transparent; }
+.kanban-scroll::-webkit-scrollbar-thumb  { background: hsl(240 8% 82%); border-radius: 99px; }
+
+/* ── Sidebar scrollbar — invisível ────────────────────────────────────────── */
+.sidebar-scroll::-webkit-scrollbar { width: 0; }
+
+/* ── Utilitários de texto ────────────────────────────────────────────────── */
+.text-gold { color: hsl(var(--gold)); }
+.bg-gold   { background-color: hsl(var(--gold)); }
+
+/* ── Transições de página ─────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: fadeUp 0.18s ease-out both; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Omni UI System — @layer components
+   Todos os primitivos usam apenas as cores da identidade visual:
+   primary (#4F52E8) · gold (#C9A84C) · foreground (#0E0E1A) · midnight (#0D0D18)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+
+  /* ── Buttons ──────────────────────────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 text-sm font-semibold
+           rounded-xl transition-all duration-150 disabled:opacity-50
+           active:scale-[0.98] cursor-pointer select-none;
+  }
+  .btn-primary {
+    @apply btn px-4 py-2.5 bg-primary text-primary-foreground
+           hover:opacity-90 shadow-sm shadow-primary/20;
+  }
+  .btn-secondary {
+    @apply btn px-4 py-2.5 bg-secondary text-foreground
+           border border-border hover:bg-border;
+  }
+  .btn-ghost {
+    @apply btn px-3 py-2 text-muted-foreground
+           hover:bg-secondary hover:text-foreground;
+  }
+  .btn-danger {
+    @apply btn px-4 py-2.5 bg-destructive/10 text-destructive
+           hover:bg-destructive/15;
+  }
+  .btn-sm  { @apply px-3 py-1.5 text-xs rounded-lg; }
+  .btn-icon { @apply btn p-2 rounded-xl; }
+
+  /* ── Form ─────────────────────────────────────────────────────────────── */
+  .form-label {
+    @apply block text-xs font-medium text-foreground mb-1.5;
+  }
+  .form-input {
+    @apply w-full px-3.5 py-2.5 border border-border rounded-xl text-sm
+           bg-white text-foreground placeholder:text-muted-foreground/40
+           focus:outline-none focus:ring-2 focus:ring-primary/20
+           focus:border-primary/40 transition-all;
+  }
+  .form-select {
+    @apply form-input appearance-none cursor-pointer;
+  }
+  .form-textarea {
+    @apply form-input resize-none;
+  }
+  .form-error {
+    @apply text-destructive text-xs mt-1;
+  }
+  /* Campo de busca — espera ícone à esquerda com pl-9 */
+  .search-wrap { @apply relative; }
+  .search-icon { @apply absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none; }
+  .search-input { @apply form-input pl-9; }
+
+  /* ── Badges ───────────────────────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5
+           rounded-md text-xs font-medium whitespace-nowrap;
+  }
+  /* Usa primary — ações neutras/normais */
+  .badge-primary  { @apply badge bg-primary/10 text-primary; }
+  /* Usa gold — destaque premium */
+  .badge-gold     { @apply badge; background: hsl(var(--gold) / 0.14); color: hsl(var(--gold)); }
+  /* Neutro / inativo */
+  .badge-muted    { @apply badge bg-secondary text-muted-foreground; }
+  /* Semânticos — manter para status de negócio */
+  .badge-success  { @apply badge bg-emerald-50 text-emerald-700; }
+  .badge-danger   { @apply badge bg-red-50 text-red-600; }
+  .badge-warning  { @apply badge bg-amber-50 text-amber-700; }
+
+  /* ── Card ─────────────────────────────────────────────────────────────── */
+  .omni-card         { @apply bg-card border border-border rounded-2xl overflow-hidden; }
+  .omni-card-header  { @apply flex items-center justify-between px-5 py-4 border-b border-border; }
+  .omni-card-body    { @apply p-5; }
+
+  /* ── Table ────────────────────────────────────────────────────────────── */
+  .omni-table           { @apply w-full; }
+  .omni-table thead     { @apply bg-secondary; }
+  .omni-table th        { @apply px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider; }
+  .omni-table td        { @apply px-4 py-3 text-sm text-foreground; }
+  .omni-table tbody tr  { @apply border-t border-border hover:bg-secondary/60 transition-colors cursor-default; }
+
+  /* ── Cabeçalho de página ─────────────────────────────────────────────── */
+  .page-title    { @apply text-xl font-bold text-foreground; }
+  .page-subtitle { @apply text-sm text-muted-foreground mt-0.5; }
+
+  /* ── Tabs ─────────────────────────────────────────────────────────────── */
+  .tab-bar  { @apply flex border-b border-border; }
+  .tab-item { @apply px-4 py-2.5 text-sm font-medium transition-colors text-muted-foreground hover:text-foreground; }
+  .tab-item.active { @apply text-primary border-b-2 border-primary; }
+
+  /* ── Empty state ──────────────────────────────────────────────────────── */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-16
+           text-muted-foreground gap-3;
+  }
+  .empty-state-icon { @apply opacity-25; }
+  .empty-state-text { @apply text-sm; }
+}

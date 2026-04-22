@@ -1,0 +1,24 @@
+# Ambiente e segredos
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Sistema / IDE
+.DS_Store
+.specstory/
+.vscode/
+
+# Next.js / Node (app em saas/)
+saas/node_modules/
+saas/.next/
+saas/out/
+saas/.vercel/
+saas/tsconfig.tsbuildinfo
+saas/.turbo/
+saas/npm-debug.log*
+saas/.pnpm-debug.log*
+
+# Supabase local (se existir)
+saas/supabase/.branches/
+saas/supabase/.temp/

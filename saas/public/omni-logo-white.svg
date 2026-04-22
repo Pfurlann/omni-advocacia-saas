@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 142 52" width="142" height="52" fill="none">
+  <!--
+    Omni Logo — Versão branca (para fundos escuros / sidebar)
+    Mesma geometria da versão dark, apenas as cores mudam.
+  -->
+
+  <!-- ── Mark ── -->
+  <g>
+    <!-- Scale line -->
+    <line
+      x1="13" y1="26" x2="39" y2="26"
+      stroke="#FFFFFF" stroke-width="1.1"
+      stroke-linecap="round" opacity="0.22"
+    />
+
+    <!-- Ring -->
+    <circle
+      cx="26" cy="26" r="18"
+      stroke="#FFFFFF" stroke-width="3.2"
+      stroke-linecap="round"
+      stroke-dasharray="99 14.1"
+      transform="rotate(-45 26 26)"
+    />
+
+    <!-- Gold dot -->
+    <circle cx="38.7" cy="13.3" r="2.1" fill="#C9A84C"/>
+  </g>
+
+  <!-- ── Wordmark ── -->
+  <text
+    x="60" y="32.5"
+    font-family="'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+    font-size="17" font-weight="600"
+    letter-spacing="3.5"
+    fill="#FFFFFF"
+  >OMNI</text>
+</svg>

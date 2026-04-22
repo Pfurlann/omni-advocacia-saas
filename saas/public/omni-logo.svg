@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 142 52" width="142" height="52" fill="none">
+  <!--
+    Omni Logo — Versão escura (para fundos claros)
+
+    Mark: anel 315° com gap de 45° posicionado entre 12h e 1h30
+    (região superior-direita), criando sensação de dinamismo e movimento.
+    Linha horizontal central: referência subliminar à balança da justiça.
+    Ponto dourado: extremidade do arco — toque premium e discreto.
+
+    Geometry:
+      center (26, 26), r=18
+      circumference ≈ 113.1
+      dasharray "99 14.1" → 315° arc + 45° gap
+      rotate(-45°) → gap at 12:00–1:30 clock position
+      gold dot at (38.7, 13.3) = 1:30 clock position
+  -->
+
+  <!-- ── Mark ── -->
+  <g>
+    <!-- Scale line — balança da justiça, sutilíssima -->
+    <line
+      x1="13" y1="26" x2="39" y2="26"
+      stroke="#0E0E1A" stroke-width="1.1"
+      stroke-linecap="round" opacity="0.14"
+    />
+
+    <!-- Ring — anel incompleto, gap no canto superior-direito -->
+    <circle
+      cx="26" cy="26" r="18"
+      stroke="#0E0E1A" stroke-width="3.2"
+      stroke-linecap="round"
+      stroke-dasharray="99 14.1"
+      transform="rotate(-45 26 26)"
+    />
+
+    <!-- Gold dot — extremidade do arco, 1h30 -->
+    <circle cx="38.7" cy="13.3" r="2.1" fill="#C9A84C"/>
+  </g>
+
+  <!-- ── Wordmark ── -->
+  <text
+    x="60" y="32.5"
+    font-family="'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+    font-size="17" font-weight="600"
+    letter-spacing="3.5"
+    fill="#0E0E1A"
+  >OMNI</text>
+</svg>

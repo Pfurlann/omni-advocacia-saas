@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/lembretes-prazos",
+      "schedule": "0 11 * * *"
+    }
+  ]
+}
+
