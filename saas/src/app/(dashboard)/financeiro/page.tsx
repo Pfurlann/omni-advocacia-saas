@@ -10,6 +10,7 @@ import {
   DollarSign,
   FileSpreadsheet,
   LayoutList,
+  PieChart,
   Receipt,
   Tags,
   TrendingDown,
@@ -27,6 +28,7 @@ const MODULOS = [
   { href: '/financeiro/notas-fiscais', label: 'Notas fiscais', desc: 'Entrada e saída / faturamento', icon: Receipt },
   { href: '/financeiro/fiscal', label: 'CFOP / Fiscal', desc: 'CFOP e ligação ao plano', icon: Tags },
   { href: '/financeiro/relatorios', label: 'Relatórios AP/AR', desc: 'Contas a pagar e a receber + CSV', icon: FileSpreadsheet },
+  { href: '/financeiro/custos', label: 'Custo por pessoa / processo', desc: 'Despesas alocadas (ERP) + CSV', icon: PieChart },
 ] as const
 
 export default function FinanceiroPage() {

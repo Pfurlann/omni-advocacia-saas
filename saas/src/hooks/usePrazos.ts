@@ -1,7 +1,7 @@
 'use client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { Prazo, StatusPrazo } from '@/types/database'
+import type { Prazo, PrazoComProcesso, StatusPrazo } from '@/types/database'
 import { addDiasCivis, diffDiasCivis, hojeIsoEmBrasil, isoDiaPrazo } from '@/lib/datetime/brazil'
 import { triggerSyncPrazo } from '@/lib/google-calendar/trigger-sync'
 
@@ -20,7 +20,11 @@ export function usePrazos(filtros: PrazosFiltros = {}) {
     queryFn: async () => {
       let q = supabase
         .from('prazos')
-        .select(`*, processo:processos(id,titulo,numero_processo,cliente:clientes(id,nome))`)
+        .select(`
+          *,
+          tipo_prazo:opcoes_cadastro!tipo_prazo_id(id,slug,rotulo,ordem,cor),
+          processo:processos(id,titulo,numero_processo,cliente:clientes(id,nome))
+        `)
         .order('data_prazo')
       if (filtros.processo_id) q = q.eq('processo_id', filtros.processo_id)
       if (filtros.status) q = q.eq('status', filtros.status)
@@ -34,10 +38,16 @@ export function usePrazos(filtros: PrazosFiltros = {}) {
       const { data, error } = await q
       if (error) throw error
       const hoje = hojeIsoEmBrasil()
-      return (data ?? []).map(p => ({
-        ...p,
-        dias_restantes: diffDiasCivis(isoDiaPrazo(p.data_prazo as string), hoje),
-      }))
+      const norm = (v: unknown) => (Array.isArray(v) ? v[0] : v)
+      return (data ?? []).map(p => {
+        const row = p as Prazo & { tipo_prazo?: unknown; processo?: unknown }
+        return {
+          ...row,
+          tipo_prazo: norm(row.tipo_prazo) as PrazoComProcesso['tipo_prazo'],
+          processo: norm(row.processo) as PrazoComProcesso['processo'],
+          dias_restantes: diffDiasCivis(isoDiaPrazo(row.data_prazo as string), hoje),
+        } as PrazoComProcesso
+      })
     },
   })
 }

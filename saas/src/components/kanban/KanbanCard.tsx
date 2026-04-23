@@ -2,7 +2,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { ProcessoComCliente } from '@/types/database'
-import { AREA_LABELS, AREA_CORES } from '@/lib/constants'
+import { corAreaHex, isPrioridadeAlta, opcaoRotulo, prioridadeBarLeftClass } from '@/lib/opcoes-helpers'
 import { AlertTriangle, Calendar, CheckSquare, DollarSign } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePrazos } from '@/hooks/usePrazos'
@@ -18,18 +18,6 @@ interface Props {
   onOpen?: (id: string) => void
   /** Filtros ativos: arrastar desligado (lista parcial / ordem no DB) */
   arrastarHabilitado?: boolean
-}
-
-const PRIORIDADE_BORDER: Record<number, string> = {
-  1: 'border-l-destructive',
-  2: 'border-l-primary',
-  3: 'border-l-border',
-}
-
-const PRIORIDADE_DOT: Record<number, string> = {
-  1: 'bg-destructive',
-  2: 'bg-primary',
-  3: 'bg-muted',
 }
 
 function PrazosIndicator({ processoId }: { processoId: string }) {
@@ -82,7 +70,7 @@ function CardConteudo({
   responsavelNome?: string | null
   responsavelFotoUrl?: string | null
 }) {
-  const areaCor = AREA_CORES[processo.area] ?? '#6b7280'
+  const areaCor = corAreaHex(processo.area)
   return (
     <>
       <p className="text-sm font-semibold text-foreground leading-snug line-clamp-2 mb-1">
@@ -108,9 +96,9 @@ function CardConteudo({
           className="text-xs px-1.5 py-0.5 rounded-md font-medium text-white"
           style={{ backgroundColor: areaCor }}
         >
-          {AREA_LABELS[processo.area] ?? processo.area}
+          {opcaoRotulo(processo.area)}
         </span>
-        {processo.prioridade === 1 && (
+        {isPrioridadeAlta(processo.prioridade) && (
           <span className="text-xs px-1.5 py-0.5 rounded-md font-medium bg-red-100 text-red-600">
             Alta
           </span>
@@ -139,7 +127,7 @@ export function KanbanCardArrastarPreview({ processo, responsavelNome = null, re
       className={cn(
         'bg-white rounded-xl border border-border border-l-4 p-3.5 select-none w-[256px] max-w-[90vw]',
         'cursor-grabbing shadow-2xl rotate-[1.5deg] scale-[1.04] ring-2 ring-primary/20',
-        PRIORIDADE_BORDER[processo.prioridade] ?? 'border-l-gray-200',
+        prioridadeBarLeftClass(processo.prioridade),
       )}
     >
       <CardConteudo
@@ -189,7 +177,7 @@ export function KanbanCard({
         arrastarHabilitado && 'cursor-grab active:cursor-grabbing',
         !arrastarHabilitado && 'cursor-default',
         'hover:shadow-md transition-shadow duration-150',
-        PRIORIDADE_BORDER[processo.prioridade] ?? 'border-l-gray-200',
+        prioridadeBarLeftClass(processo.prioridade),
         isDragging && 'opacity-30',
       )}
     >

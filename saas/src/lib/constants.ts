@@ -162,3 +162,10 @@ export const POLO_LABELS: Record<string, string> = {
   terceiro: 'Terceiro',
   consulta: 'Consulta',
 }
+
+/** Cadastro ERP: cliente de serviços, fornecedor, ou ambos. */
+export const PAPEL_ERP_LABELS: Record<string, string> = {
+  cliente:     'Cliente',
+  fornecedor:  'Fornecedor',
+  ambos:       'Cliente e fornecedor',
+}

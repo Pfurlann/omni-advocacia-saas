@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       .maybeSingle(),
     supabase
       .from('prazos')
-      .select('id, titulo, tipo, data_prazo, hora_prazo, status, processo_id, responsavel_id, processo:processos(titulo,numero_processo,cliente:clientes(nome))')
+      .select('id, titulo, tipo_prazo_id, data_prazo, hora_prazo, status, processo_id, responsavel_id, tipo_prazo:opcoes_cadastro!tipo_prazo_id(rotulo,slug), processo:processos(titulo,numero_processo,cliente:clientes(nome))')
       .in('status', ['pendente'])
       .gte('data_prazo', from)
       .lte('data_prazo', to)
@@ -64,6 +64,7 @@ export async function GET(request: Request) {
 
   // ── 3. Mapear prazos Omni ─────────────────────────────────────────────────
   const base = appOriginFromRequest(request)
+  const norm = (v: unknown) => (Array.isArray(v) ? v[0] : v)
   const omni: unknown[] = showOmni ? prazosRaw.map(p => {
     const proc = (p as { processo?: unknown }).processo
     const processo = Array.isArray(proc) ? proc[0] : proc
@@ -72,11 +73,12 @@ export async function GET(request: Request) {
     const clienteRow = Array.isArray(cli) ? cli[0] : cli
     const clienteNome = clienteRow?.nome?.trim() ? clienteRow.nome.trim() : null
     const rid = (p as { responsavel_id: string }).responsavel_id
+    const to = norm((p as { tipo_prazo?: unknown }).tipo_prazo) as { rotulo?: string; slug?: string } | null | undefined
     return {
       id: p.id,
       source: 'omni' as const,
       titulo: p.titulo,
-      tipo: p.tipo,
+      tipo: to?.rotulo ?? (p as { tipo_prazo_id?: string }).tipo_prazo_id ?? '—',
       dataPrazo: p.data_prazo,
       horaPrazo: p.hora_prazo,
       processoId: p.processo_id,

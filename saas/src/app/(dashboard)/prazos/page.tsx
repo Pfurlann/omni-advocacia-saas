@@ -1,6 +1,7 @@
 'use client'
 import { usePrazos, useConcluirPrazo } from '@/hooks/usePrazos'
-import { TIPO_PRAZO_LABELS } from '@/lib/constants'
+import { opcaoRotulo } from '@/lib/opcoes-helpers'
+import type { PrazoComProcesso } from '@/types/database'
 import { formatDate } from '@/lib/formatters'
 import { AlertTriangle, CheckCircle, Calendar, Flag } from 'lucide-react'
 import { OmniSpinner } from '@/components/brand/OmniSpinner'
@@ -57,7 +58,7 @@ export default function PrazosPage() {
         <div className="flex-1 min-w-0">
           <p className="font-medium text-foreground text-sm">{prazo.titulo}</p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            <span className="text-xs text-muted-foreground">{TIPO_PRAZO_LABELS[prazo.tipo]}</span>
+            <span className="text-xs text-muted-foreground">{opcaoRotulo((prazo as PrazoComProcesso).tipo_prazo)}</span>
             <span className="text-xs text-muted-foreground">·</span>
             <span className="text-xs text-muted-foreground">{formatDate(prazo.data_prazo)}</span>
             {(prazo as any).processo && (

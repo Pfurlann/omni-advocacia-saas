@@ -177,6 +177,7 @@ export function ModalAcordoParcelado({ onClose, escritorioId, clientes, isGestor
       escritorio_id: escritorioId,
       nome: n,
       tipo: 'PF',
+      papel_erp: 'cliente',
       cpf_cnpj: null,
       email: null,
       telefone: null,

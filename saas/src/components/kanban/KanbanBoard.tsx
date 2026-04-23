@@ -33,11 +33,11 @@ import { useMeuPapelEscritorio, useEscritorioMembros } from '@/hooks/useEscritor
 import { KanbanColuna } from './KanbanColuna'
 import { KanbanCard, KanbanCardArrastarPreview } from './KanbanCard'
 import { ProcessoPanel } from './ProcessoPanel'
-import type { ProcessoComCliente, AreaDireito, TipoPrazo } from '@/types/database'
-import { AREA_LABELS, TIPO_PRAZO_LABELS } from '@/lib/constants'
+import type { ProcessoComCliente } from '@/types/database'
 import { toast } from 'sonner'
 import { OmniSpinner } from '@/components/brand/OmniSpinner'
 import { FormProcesso } from '@/components/processos/FormProcesso'
+import { useOpcoesCadastro } from '@/hooks/useOpcoesCadastro'
 
 const dropAnimation: DropAnimation = {
   sideEffects: defaultDropAnimationSideEffects({
@@ -49,16 +49,20 @@ export function KanbanBoard() {
   const { data: etapas = [], isLoading: loadingEtapas } = useEtapasKanban()
   const { data: me } = useMeuPapelEscritorio()
   const { data: membros = [] } = useEscritorioMembros()
+  const { data: opcoes = [] } = useOpcoesCadastro()
+  const opAreas = opcoes.filter(o => o.categoria === 'area' && o.ativo)
+  const opPri = opcoes.filter(o => o.categoria === 'prioridade_processo' && o.ativo)
+  const opTiposPrazo = opcoes.filter(o => o.categoria === 'tipo_prazo' && o.ativo)
 
   const [filtroResponsavel, setFiltroResponsavel] = useState('')
-  const [filtroPrioridade, setFiltroPrioridade] = useState<'' | '1' | '2' | '3'>('')
-  const [filtroArea, setFiltroArea] = useState<'' | AreaDireito>('')
+  const [filtroPrioridade, setFiltroPrioridade] = useState('')
+  const [filtroArea, setFiltroArea] = useState('')
   const [filtroVencimento, setFiltroVencimento] = useState<KanbanFiltroVencimento>('todos')
   const [filtroTipoPrazo, setFiltroTipoPrazo] = useState<KanbanFiltroTipoPrazo>('todos')
 
   const { data: processos = [], isLoading: loadingProcessos } = useProcessos({
     responsavel_id: filtroResponsavel || undefined,
-    prioridade: filtroPrioridade ? (Number(filtroPrioridade) as 1 | 2 | 3) : undefined,
+    prioridade: filtroPrioridade || undefined,
     area: filtroArea || undefined,
     prazo_vencimento: filtroVencimento,
     tipo_prazo: filtroTipoPrazo,
@@ -231,22 +235,22 @@ export function KanbanBoard() {
         )}
         <select
           value={filtroPrioridade}
-          onChange={e => setFiltroPrioridade(e.target.value as '' | '1' | '2' | '3')}
+          onChange={e => setFiltroPrioridade(e.target.value)}
           className="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Prioridade: todas</option>
-          <option value="1">Alta</option>
-          <option value="2">Normal</option>
-          <option value="3">Baixa</option>
+          {opPri.map(p => (
+            <option key={p.id} value={p.id}>{p.rotulo}</option>
+          ))}
         </select>
         <select
           value={filtroArea}
-          onChange={e => setFiltroArea(e.target.value as '' | AreaDireito)}
+          onChange={e => setFiltroArea(e.target.value)}
           className="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="">Área: todas</option>
-          {(Object.keys(AREA_LABELS) as AreaDireito[]).map(a => (
-            <option key={a} value={a}>{AREA_LABELS[a]}</option>
+          {opAreas.map(a => (
+            <option key={a.id} value={a.id}>{a.rotulo}</option>
           ))}
         </select>
         <select
@@ -266,8 +270,8 @@ export function KanbanBoard() {
           className="text-sm border border-border rounded-lg px-2.5 py-1.5 bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 max-w-[200px]"
         >
           <option value="todos">Tipo de prazo: todos</option>
-          {(Object.keys(TIPO_PRAZO_LABELS) as TipoPrazo[]).map(t => (
-            <option key={t} value={t}>{TIPO_PRAZO_LABELS[t]}</option>
+          {opTiposPrazo.map(t => (
+            <option key={t.id} value={t.id}>{t.rotulo}</option>
           ))}
         </select>
       </div>

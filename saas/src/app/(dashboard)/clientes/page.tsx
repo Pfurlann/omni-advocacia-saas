@@ -11,12 +11,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import type { Cliente, StatusCliente } from '@/types/database'
+import type { Cliente, PapelErp, StatusCliente } from '@/types/database'
+import { PAPEL_ERP_LABELS } from '@/lib/constants'
 import { Button, SearchInput, Select, Input, Textarea, Label, FormError, Modal, EmptyState } from '@/components/ui'
 
 const schema = z.object({
   nome:         z.string().min(2, 'Nome obrigatório'),
   tipo:         z.enum(['PF', 'PJ']),
+  papel_erp:    z.enum(['cliente', 'fornecedor', 'ambos']),
   cpf_cnpj:     z.string().optional(),
   email:        z.string().email('Email inválido').optional().or(z.literal('')),
   telefone:     z.string().optional(),
@@ -41,26 +43,34 @@ export default function ClientesPage() {
   const router = useRouter()
   const [search, setSearch]     = useState('')
   const [status, setStatus]     = useState<StatusCliente | undefined>()
+  const [papel, setPapel]       = useState<PapelErp | undefined>()
   const [page, setPage]         = useState(1)
   const [showForm, setShowForm] = useState(false)
   const [editando, setEditando] = useState<Cliente | null>(null)
   const { data: escritorio }    = useEscritorio()
-  const { data, isLoading }     = useClientes({ search, status, page })
+  const { data, isLoading }     = useClientes({ search, status, papel_erp: papel, page })
   const create                  = useCreateCliente()
   const update                  = useUpdateCliente()
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: 'PF', status: 'ativo' },
+    defaultValues: { tipo: 'PF', status: 'ativo', papel_erp: 'cliente' },
   })
 
   const abrirForm = (c?: Cliente) => {
     if (c) {
       setEditando(c)
-      reset({ ...c, email: c.email ?? '', cpf_cnpj: c.cpf_cnpj ?? '', telefone: c.telefone ?? '', observacoes: c.observacoes ?? '' })
+      reset({
+        ...c,
+        email: c.email ?? '',
+        cpf_cnpj: c.cpf_cnpj ?? '',
+        telefone: c.telefone ?? '',
+        observacoes: c.observacoes ?? '',
+        papel_erp: c.papel_erp ?? 'cliente',
+      })
     } else {
       setEditando(null)
-      reset({ tipo: 'PF', status: 'ativo' })
+      reset({ tipo: 'PF', status: 'ativo', papel_erp: 'cliente' })
     }
     setShowForm(true)
   }
@@ -73,9 +83,9 @@ export default function ClientesPage() {
       } else {
         await create.mutateAsync({ ...data, escritorio_id: escritorio.id, email: data.email || null, cpf_cnpj: data.cpf_cnpj || null, telefone: data.telefone || null, endereco: null, observacoes: data.observacoes || null })
       }
-      toast.success(editando ? 'Cliente atualizado!' : 'Cliente criado!')
+      toast.success(editando ? 'Cadastro atualizado!' : 'Cadastro criado!')
       setShowForm(false)
-    } catch { toast.error('Erro ao salvar cliente') }
+    } catch { toast.error('Erro ao salvar') }
   }
 
   const total    = data?.total ?? 0
@@ -83,13 +93,19 @@ export default function ClientesPage() {
 
   return (
     <div className="page-enter space-y-5">
-      <h1 className="sr-only">Clientes</h1>
+      <h1 className="sr-only">Cadastros — clientes e fornecedores</h1>
+      <div>
+        <p className="text-sm font-medium text-foreground">Cadastros</p>
+        <p className="text-xs text-muted-foreground mt-0.5 max-w-2xl">
+          Mesmo cadastro para quem paga honorários, quem fatura o escritório e os dois. Usa nos lançamentos para custo por pessoa e por processo.
+        </p>
+      </div>
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-xs text-muted-foreground">
-          {total} {total === 1 ? 'cliente cadastrado' : 'clientes cadastrados'}
+          {total} {total === 1 ? 'cadastro' : 'cadastros'}
         </p>
         <Button onClick={() => abrirForm()}>
-          <Plus className="h-4 w-4" /> Novo Cliente
+          <Plus className="h-4 w-4" /> Novo cadastro
         </Button>
       </div>
 
@@ -111,6 +127,19 @@ export default function ClientesPage() {
           <option value="inativo">Inativo</option>
           <option value="prospecto">Prospecto</option>
         </Select>
+        <Select
+          value={papel ?? ''}
+          onChange={e => {
+            setPapel((e.target.value || undefined) as PapelErp | undefined)
+            setPage(1)
+          }}
+          className="w-auto min-w-[10rem]"
+        >
+          <option value="">Papel: todos</option>
+          {(Object.keys(PAPEL_ERP_LABELS) as PapelErp[]).map(p => (
+            <option key={p} value={p}>{PAPEL_ERP_LABELS[p]}</option>
+          ))}
+        </Select>
       </div>
 
       <div className="omni-card">
@@ -121,17 +150,17 @@ export default function ClientesPage() {
         ) : clientes.length === 0 ? (
           <EmptyState
             icon={Users}
-            title="Nenhum cliente encontrado"
+            title="Nenhum cadastro encontrado"
             action={!search ? (
               <Button size="sm" onClick={() => abrirForm()}>
-                <Plus className="h-3.5 w-3.5" /> Novo Cliente
+                <Plus className="h-3.5 w-3.5" /> Novo cadastro
               </Button>
             ) : undefined}
           />
         ) : (
           <table className="omni-table">
             <thead>
-              <tr>{['Nome', 'Tipo', 'Contato', 'Status', ''].map(h => <th key={h}>{h}</th>)}</tr>
+              <tr>{['Nome', 'Papel (ERP)', 'Tipo pessoa', 'Contato', 'Status', ''].map(h => <th key={h}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {clientes.map(c => (
@@ -160,6 +189,11 @@ export default function ClientesPage() {
                         {c.tipo === 'PF' ? formatCPF(c.cpf_cnpj) : formatCNPJ(c.cpf_cnpj)}
                       </p>
                     )}
+                  </td>
+                  <td>
+                    <span className="badge badge-primary text-[10px]">
+                      {PAPEL_ERP_LABELS[c.papel_erp] ?? c.papel_erp}
+                    </span>
                   </td>
                   <td><span className="badge badge-muted">{c.tipo}</span></td>
                   <td>
@@ -194,16 +228,25 @@ export default function ClientesPage() {
         </div>
       )}
 
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={editando ? 'Editar Cliente' : 'Novo Cliente'}>
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editando ? 'Editar cadastro' : 'Novo cadastro (cliente / fornecedor)'}>
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
           <div>
             <Label>Nome *</Label>
             <Input {...register('nome')} placeholder="Nome completo ou razão social" />
             <FormError>{errors.nome?.message}</FormError>
           </div>
+          <div>
+            <Label>Papel no escritório (ERP) *</Label>
+            <Select {...register('papel_erp')}>
+              {(Object.keys(PAPEL_ERP_LABELS) as PapelErp[]).map(p => (
+                <option key={p} value={p}>{PAPEL_ERP_LABELS[p]}</option>
+              ))}
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Fornecedores usam os mesmos lançamentos e relatórios de custo que clientes de processo.</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Tipo</Label>
+              <Label>Tipo de pessoa</Label>
               <Select {...register('tipo')}>
                 <option value="PF">Pessoa Física</option>
                 <option value="PJ">Pessoa Jurídica</option>

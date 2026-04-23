@@ -7,9 +7,9 @@ import { toast } from 'sonner'
 import { useEtapasKanban, useUpdateProcesso } from '@/hooks/useProcessos'
 import { useClientes } from '@/hooks/useClientes'
 import { useMeuPapelEscritorio, useEscritorioMembros } from '@/hooks/useEscritorioMembros'
-import { AREA_LABELS } from '@/lib/constants'
+import { useOpcoesCadastro } from '@/hooks/useOpcoesCadastro'
 import { DATAJUD_TRIBUNAIS } from '@/lib/datajud/tribunais'
-import type { AreaDireito, PoloCliente, Processo } from '@/types/database'
+import type { PoloCliente, Processo } from '@/types/database'
 import { X } from 'lucide-react'
 import { OmniSpinner } from '@/components/brand/OmniSpinner'
 
@@ -17,9 +17,9 @@ const schema = z.object({
   titulo: z.string().min(3, 'Título obrigatório'),
   cliente_id: z.string().min(1, 'Cliente obrigatório'),
   etapa_id: z.string().min(1, 'Etapa obrigatória'),
-  area: z.string(),
+  area_id: z.string().min(1),
   polo: z.string(),
-  prioridade: z.number(),
+  prioridade_id: z.string().min(1),
   numero_processo: z.string().optional(),
   vara_tribunal: z.string().optional(),
   valor_causa: z.number().optional(),
@@ -43,6 +43,9 @@ export function FormEditarProcesso({ processo, open, onClose }: Props) {
   const { data: me } = useMeuPapelEscritorio()
   const { data: membros = [] } = useEscritorioMembros()
   const updateProcesso = useUpdateProcesso()
+  const { data: opcoes = [] } = useOpcoesCadastro()
+  const opAreas = opcoes.filter(o => o.categoria === 'area' && o.ativo)
+  const opPri = opcoes.filter(o => o.categoria === 'prioridade_processo' && o.ativo)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
@@ -54,9 +57,9 @@ export function FormEditarProcesso({ processo, open, onClose }: Props) {
       titulo: processo.titulo,
       cliente_id: processo.cliente_id,
       etapa_id: processo.etapa_id,
-      area: processo.area,
+      area_id: processo.area_id,
       polo: processo.polo,
-      prioridade: processo.prioridade,
+      prioridade_id: processo.prioridade_id,
       numero_processo: processo.numero_processo ?? '',
       vara_tribunal: processo.vara_tribunal ?? '',
       valor_causa: processo.valor_causa ?? undefined,
@@ -73,9 +76,9 @@ export function FormEditarProcesso({ processo, open, onClose }: Props) {
         titulo: data.titulo,
         cliente_id: data.cliente_id,
         etapa_id: data.etapa_id,
-        area: data.area as AreaDireito,
+        area_id: data.area_id,
+        prioridade_id: data.prioridade_id,
         polo: data.polo as PoloCliente,
-        prioridade: data.prioridade as 1 | 2 | 3,
         numero_processo: data.numero_processo || null,
         vara_tribunal: data.vara_tribunal || null,
         valor_causa: data.valor_causa || null,
@@ -149,8 +152,8 @@ export function FormEditarProcesso({ processo, open, onClose }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Área</label>
-              <select {...register('area')} className="input">
-                {Object.entries(AREA_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              <select {...register('area_id')} className="input">
+                {opAreas.map(a => <option key={a.id} value={a.id}>{a.rotulo}</option>)}
               </select>
             </div>
             <div>
@@ -167,10 +170,8 @@ export function FormEditarProcesso({ processo, open, onClose }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Prioridade</label>
-              <select {...register('prioridade', { valueAsNumber: true })} className="input">
-                <option value={1}>Alta</option>
-                <option value={2}>Normal</option>
-                <option value={3}>Baixa</option>
+              <select {...register('prioridade_id')} className="input">
+                {opPri.map(p => <option key={p.id} value={p.id}>{p.rotulo}</option>)}
               </select>
             </div>
             <div>

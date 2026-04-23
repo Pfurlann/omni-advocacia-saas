@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useProcessos } from '@/hooks/useProcessos'
-import { AREA_LABELS, AREA_CORES, PRIORIDADE_LABELS, PRIORIDADE_CORES } from '@/lib/constants'
+import { corAreaHex, opcaoRotulo, prioridadeBadgeClass } from '@/lib/opcoes-helpers'
 import { formatDate } from '@/lib/formatters'
 import { Plus, FileText } from 'lucide-react'
 import { OmniSpinner } from '@/components/brand/OmniSpinner'
@@ -84,23 +84,23 @@ export default function ProcessosPage() {
                   <td>
                     <span
                       className="badge text-white"
-                      style={{ backgroundColor: AREA_CORES[p.area] ?? '#6b7280' }}
+                      style={{ backgroundColor: corAreaHex((p as { area?: { cor?: string | null } }).area) }}
                     >
-                      {AREA_LABELS[p.area]}
+                      {opcaoRotulo((p as { area?: { rotulo?: string } }).area)}
                     </span>
                   </td>
                   <td>
                     <span className="flex items-center gap-1.5">
                       <span
                         className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: (p as any).etapa?.cor ?? '#6b7280' }}
+                        style={{ backgroundColor: (p as { etapa?: { cor?: string } }).etapa?.cor ?? '#6b7280' }}
                       />
-                      <span className="text-muted-foreground text-sm">{(p as any).etapa?.nome ?? '—'}</span>
+                      <span className="text-muted-foreground text-sm">{(p as { etapa?: { nome?: string } }).etapa?.nome ?? '—'}</span>
                     </span>
                   </td>
                   <td>
-                    <span className={cn('badge', PRIORIDADE_CORES[p.prioridade])}>
-                      {PRIORIDADE_LABELS[p.prioridade]}
+                    <span className={cn('badge', prioridadeBadgeClass((p as { prioridade?: { cor?: string | null; slug?: string } }).prioridade))}>
+                      {opcaoRotulo((p as { prioridade?: { rotulo?: string } }).prioridade)}
                     </span>
                   </td>
                   <td className="text-muted-foreground text-xs">

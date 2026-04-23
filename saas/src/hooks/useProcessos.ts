@@ -2,22 +2,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { diffDiasCivis, hojeIsoEmBrasil, isoDiaPrazo } from '@/lib/datetime/brazil'
-import type { Processo, ProcessoComCliente, EtapaKanban, AreaDireito, TipoPrazo } from '@/types/database'
+import type { Processo, ProcessoComCliente, ProcessoDetalhado, EtapaKanban } from '@/types/database'
 
 export type KanbanFiltroVencimento = 'todos' | '7d' | '15d' | 'atrasados' | 'sem_pendente'
-export type KanbanFiltroTipoPrazo = 'todos' | TipoPrazo
+export type KanbanFiltroTipoPrazo = 'todos' | string
 
 interface ProcessosFiltros {
   etapa_id?: string
-  area?: AreaDireito
+  /** ID em opcoes_cadastro (categoria area) */
+  area?: string
   cliente_id?: string
   search?: string
   /** Título ou número do processo (ilike) — use com `limit` curto no UI */
   buscaLivre?: string
   arquivado?: boolean
   responsavel_id?: string
-  prioridade?: 1 | 2 | 3
+  /** ID em opcoes_cadastro (categoria prioridade_processo) */
+  prioridade?: string
   prazo_vencimento?: KanbanFiltroVencimento
+  /** ID em opcoes_cadastro (categoria tipo_prazo) */
   tipo_prazo?: KanbanFiltroTipoPrazo
 }
 
@@ -28,7 +31,7 @@ export function processoMatchesKanbanPrazoFiltros(
 ) {
   const allPend = (p.prazos ?? []).filter(z => z.status === 'pendente')
   let pend = allPend
-  if (ft !== 'todos') pend = pend.filter(z => z.tipo === ft)
+  if (ft !== 'todos') pend = pend.filter(z => z.tipo_prazo_id === ft)
 
   if (fv === 'todos' && ft === 'todos') return true
 
@@ -92,11 +95,16 @@ export function useProcessos(filtros: ProcessosFiltros = {}) {
           *,
           cliente:clientes(id,nome,tipo),
           etapa:etapas_kanban(id,nome,cor,ordem),
-          prazos(id,data_prazo,status,tipo)
+          area:opcoes_cadastro!area_id(id,slug,rotulo,ordem,cor),
+          prioridade:opcoes_cadastro!prioridade_id(id,slug,rotulo,ordem,cor),
+          prazos(
+            id,data_prazo,status,tipo_prazo_id,
+            tipo_prazo:opcoes_cadastro!tipo_prazo_id(id,slug,rotulo,ordem,cor)
+          )
         `)
         .eq('arquivado', filtros.arquivado ?? false)
       if (filtros.etapa_id) q = q.eq('etapa_id', filtros.etapa_id)
-      if (filtros.area) q = q.eq('area', filtros.area)
+      if (filtros.area) q = q.eq('area_id', filtros.area)
       if (filtros.cliente_id) q = q.eq('cliente_id', filtros.cliente_id)
       if (filtros.search) q = q.ilike('titulo', `%${filtros.search}%`)
       if (filtros.buscaLivre !== undefined && filtros.buscaLivre.trim().length >= 2) {
@@ -105,10 +113,23 @@ export function useProcessos(filtros: ProcessosFiltros = {}) {
         q = q.limit(40)
       }
       if (filtros.responsavel_id) q = q.eq('responsavel_id', filtros.responsavel_id)
-      if (filtros.prioridade) q = q.eq('prioridade', filtros.prioridade)
+      if (filtros.prioridade) q = q.eq('prioridade_id', filtros.prioridade)
       const { data, error } = await q
       if (error) throw error
-      let rows = (data ?? []) as ProcessoComCliente[]
+      const raw = (data ?? []) as ProcessoComCliente[]
+      const norm = (v: unknown) => (Array.isArray(v) ? v[0] : v)
+      let rows = raw.map(p => {
+        const prazos = (p.prazos ?? []).map(z => ({
+          ...z,
+          tipo_prazo: norm((z as { tipo_prazo?: unknown }).tipo_prazo),
+        }))
+        return {
+          ...p,
+          area: norm(p.area),
+          prioridade: norm(p.prioridade),
+          prazos,
+        } as ProcessoComCliente
+      })
       if (fv !== 'todos' || ft !== 'todos') {
         rows = rows.filter(p => processoMatchesKanbanPrazoFiltros(p, fv, ft))
       }
@@ -135,9 +156,14 @@ export function useProcesso(id: string) {
           *,
           cliente:clientes(id,nome,tipo,email,telefone),
           etapa:etapas_kanban(id,nome,cor),
+          area:opcoes_cadastro!area_id(id,slug,rotulo,ordem,cor),
+          prioridade:opcoes_cadastro!prioridade_id(id,slug,rotulo,ordem,cor),
           movimentacoes(*),
           tarefas(*),
-          prazos(*),
+          prazos(
+            *,
+            tipo_prazo:opcoes_cadastro!tipo_prazo_id(id,slug,rotulo,ordem,cor)
+          ),
           documentos(*),
           honorarios(*),
           lancamentos(*)
@@ -145,7 +171,18 @@ export function useProcesso(id: string) {
         .eq('id', id)
         .single()
       if (error) throw error
-      return data
+      const d = data as Record<string, unknown>
+      const norm = (v: unknown) => (Array.isArray(v) ? v[0] : v)
+      const prs = ((d.prazos as unknown[]) ?? []).map(z => {
+        const row = z as { tipo_prazo?: unknown }
+        return { ...row, tipo_prazo: norm(row.tipo_prazo) }
+      })
+      return {
+        ...d,
+        area: norm(d.area),
+        prioridade: norm(d.prioridade),
+        prazos: prs,
+      } as unknown as ProcessoDetalhado
     },
     enabled: !!id,
   })
@@ -207,5 +244,31 @@ export function usePersistirLayoutKanban() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['processos'] }),
+  })
+}
+
+/** Lista leve para selects (lançamentos): não filtra por prazos do Kanban. */
+export function useProcessosSelectLancamento(clienteId?: string | null) {
+  return useQuery({
+    queryKey: ['processos-lanc-select', clienteId ?? 'all'],
+    queryFn: async () => {
+      const supabase = createClient()
+      let q = supabase
+        .from('processos')
+        .select('id, titulo, numero_processo, cliente_id')
+        .eq('arquivado', false)
+        .order('updated_at', { ascending: false })
+        .limit(500)
+      if (clienteId) q = q.eq('cliente_id', clienteId)
+      const { data, error } = await q
+      if (error) throw error
+      return (data ?? []) as Array<{
+        id: string
+        titulo: string
+        numero_processo: string | null
+        cliente_id: string
+      }>
+    },
+    staleTime: 60_000,
   })
 }

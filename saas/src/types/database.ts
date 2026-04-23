@@ -3,9 +3,9 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 // ─── Enums ───────────────────────────────────────────────────────────────────
 export type TipoPessoa = 'PF' | 'PJ'
 export type StatusCliente = 'ativo' | 'inativo' | 'prospecto'
-export type AreaDireito = 'trabalhista' | 'civil' | 'criminal' | 'tributario' | 'previdenciario' | 'empresarial' | 'familia' | 'consumidor' | 'administrativo' | 'imobiliario' | 'outro'
 export type PoloCliente = 'ativo' | 'passivo' | 'terceiro' | 'consulta'
-export type TipoPrazo = 'prazo_fatal' | 'prazo_interno' | 'audiencia' | 'pericia' | 'intimacao' | 'protocolo' | 'reuniao_cliente' | 'outro'
+/** Listas por escritório (Configurações → Listas) — slugs legados: civil, p1, prazo_interno, etc. */
+export type CategoriaCadastro = 'area' | 'prioridade_processo' | 'tipo_prazo'
 export type StatusPrazo = 'pendente' | 'concluido' | 'cancelado' | 'perdido'
 export type StatusTarefa = 'todo' | 'in_progress' | 'done' | 'cancelada'
 export type PrioridadeTarefa = 'alta' | 'normal' | 'baixa'
@@ -21,6 +21,21 @@ export type TipoNotaFiscal = 'entrada' | 'saida'
 export type StatusLancamento = 'pago' | 'pendente' | 'inadimplente' | 'cancelado'
 export type CategoriaLancamento = 'honorario_fixo' | 'honorario_exito' | 'consultoria' | 'custas_processuais' | 'outros_receitas' | 'acordo_parcelado' | 'aluguel' | 'internet_telefone' | 'software' | 'marketing' | 'contador' | 'material_escritorio' | 'outros_despesas'
 export type PapelEscritorio = 'gestor' | 'advogado'
+/** Cadastro CRM/ERP: quem cobra, de quem compra, ou os dois. */
+export type PapelErp = 'cliente' | 'fornecedor' | 'ambos'
+
+export interface OpcaoCadastro {
+  id: string
+  escritorio_id: string
+  categoria: CategoriaCadastro
+  slug: string
+  rotulo: string
+  ordem: number
+  cor: string | null
+  ativo: boolean
+  created_at: string
+  updated_at: string
+}
 
 // ─── Tabelas base ─────────────────────────────────────────────────────────────
 export interface Profile {
@@ -76,6 +91,8 @@ export interface Cliente {
   telefone: string | null
   endereco: string | null
   status: StatusCliente
+  /** Cliente, fornecedor ou ambos (ERP / contas). */
+  papel_erp: PapelErp
   observacoes: string | null
   created_at: string
   updated_at: string
@@ -90,7 +107,8 @@ export interface Processo {
   etapa_id: string
   titulo: string
   numero_processo: string | null
-  area: AreaDireito
+  area_id: string
+  prioridade_id: string
   polo: PoloCliente
   vara_tribunal: string | null
   comarca: string | null
@@ -99,7 +117,6 @@ export interface Processo {
   valor_acordo: number | null
   descricao: string | null
   kanban_ordem: number
-  prioridade: 1 | 2 | 3
   data_distribuicao: string | null
   data_encerramento: string | null
   arquivado: boolean
@@ -130,7 +147,7 @@ export interface Prazo {
   responsavel_id: string
   processo_id: string | null
   titulo: string
-  tipo: TipoPrazo
+  tipo_prazo_id: string
   data_prazo: string
   hora_prazo: string | null
   status: StatusPrazo
@@ -291,11 +308,15 @@ export interface NotaFiscal {
 }
 
 // ─── Tipos enriquecidos (joins) ───────────────────────────────────────────────
-export type ProcessoPrazoResumo = Pick<Prazo, 'id' | 'data_prazo' | 'status' | 'tipo'>
+export type ProcessoPrazoResumo = Pick<Prazo, 'id' | 'data_prazo' | 'status' | 'tipo_prazo_id'> & {
+  tipo_prazo?: Pick<OpcaoCadastro, 'id' | 'slug' | 'rotulo' | 'ordem' | 'cor'> | null
+}
 
 export interface ProcessoComCliente extends Processo {
   cliente: Pick<Cliente, 'id' | 'nome' | 'tipo'>
   etapa: Pick<EtapaKanban, 'id' | 'nome' | 'cor' | 'ordem'>
+  area?: Pick<OpcaoCadastro, 'id' | 'slug' | 'rotulo' | 'ordem' | 'cor'> | null
+  prioridade?: Pick<OpcaoCadastro, 'id' | 'slug' | 'rotulo' | 'ordem' | 'cor'> | null
   prazos?: ProcessoPrazoResumo[]
   _count?: {
     tarefas: number
@@ -315,6 +336,7 @@ export interface ProcessoDetalhado extends ProcessoComCliente {
 
 export interface PrazoComProcesso extends Prazo {
   dias_restantes: number
+  tipo_prazo?: Pick<OpcaoCadastro, 'id' | 'slug' | 'rotulo' | 'ordem' | 'cor'> | null
   processo?: Pick<Processo, 'id' | 'titulo' | 'numero_processo'> & {
     cliente: Pick<Cliente, 'id' | 'nome'>
   }

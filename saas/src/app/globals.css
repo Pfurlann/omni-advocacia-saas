@@ -58,17 +58,23 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Scrollbar global — discreta */
-  ::-webkit-scrollbar        { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track  { background: transparent; }
-  ::-webkit-scrollbar-thumb  { background: hsl(240 8% 82%); border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(240 12% 68%); }
+  /* Fonte de exibição — usada em títulos de alto impacto */
+  .font-display {
+    font-family: var(--font-display), 'Georgia', serif;
+  }
 }
+
+/* Scrollbar global — discreta */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: hsl(240 8% 82%); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(240 12% 68%); }
 
 /* ── Kanban horizontal scroll ────────────────────────────────────────────── */
 .kanban-scroll::-webkit-scrollbar        { height: 5px; }
@@ -105,7 +111,9 @@
   }
   .btn-primary {
     @apply btn px-4 py-2.5 bg-primary text-primary-foreground
-           hover:opacity-90 shadow-sm shadow-primary/20;
+           shadow-sm shadow-primary/25
+           hover:shadow-md hover:shadow-primary/30 hover:brightness-110
+           active:brightness-95;
   }
   .btn-secondary {
     @apply btn px-4 py-2.5 bg-secondary text-foreground
@@ -190,4 +198,17 @@
   }
   .empty-state-icon { @apply opacity-25; }
   .empty-state-text { @apply text-sm; }
+
+  /* ── Omni brand pattern — anéis em grade, uso em painéis dark ────────── */
+  .omni-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Ccircle cx='28' cy='28' r='14' stroke='%23ffffff' stroke-width='1.4' stroke-linecap='round' stroke-dasharray='75.4 12.6' stroke-dashoffset='-13' fill='none' opacity='0.07'/%3E%3Ccircle cx='46.9' cy='9.1' r='1.4' fill='%23C9A84C' opacity='0.25'/%3E%3C/svg%3E");
+    background-size: 56px 56px;
+  }
+
+  /* ── Omni gradient accent bar ─────────────────────────────────────────── */
+  .omni-accent-bar {
+    height: 3px;
+    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--gold)) 100%);
+    border-radius: 0 0 2px 2px;
+  }
 }

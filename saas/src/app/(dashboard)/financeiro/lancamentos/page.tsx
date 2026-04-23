@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLancamentos, useCreateLancamento, useMarcarPago, useDeleteLancamento } from '@/hooks/useLancamentos'
+import { useProcessosSelectLancamento } from '@/hooks/useProcessos'
 import { usePlanoContasAnaliticos } from '@/hooks/usePlanoContas'
 import { useClientes } from '@/hooks/useClientes'
 import { useEscritorio } from '@/hooks/useEscritorio'
@@ -28,6 +29,7 @@ const schema = z.object({
   data_competencia:  z.string().optional(),
   plano_conta_id:    z.string().optional(),
   cliente_id:        z.string().optional(),
+  processo_id:       z.string().optional(),
   status:            z.enum(['pago', 'pendente', 'inadimplente', 'cancelado']).default('pendente'),
   forma_pagamento:   z.string().optional(),
   observacoes:       z.string().optional(),
@@ -54,12 +56,33 @@ export default function LancamentosPage() {
   const marcarPago = useMarcarPago()
   const deletar    = useDeleteLancamento()
 
-  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<Form>({
+  const { register, handleSubmit, watch, reset, setValue, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
-    defaultValues: { tipo: 'receita', status: 'pendente', categoria: 'honorario_fixo', plano_conta_id: '', data_competencia: '' },
+    defaultValues: {
+      tipo: 'receita',
+      status: 'pendente',
+      categoria: 'honorario_fixo',
+      plano_conta_id: '',
+      data_competencia: '',
+      processo_id: '',
+      cliente_id: '',
+    },
   })
-  const tipoWatch  = watch('tipo')
+  const tipoWatch     = watch('tipo')
+  const clienteFiltro = watch('cliente_id')?.trim() || null
+  const processoWatch = watch('processo_id')
+  const { data: processosSel = [] } = useProcessosSelectLancamento(clienteFiltro)
   const categorias = tipoWatch === 'receita' ? CATEGORIA_RECEITA_LABELS : CATEGORIA_DESPESA_LABELS
+
+  useEffect(() => {
+    if (!processoWatch) return
+    const p = processosSel.find(x => x.id === processoWatch)
+    if (!p) {
+      setValue('processo_id', '')
+      return
+    }
+    if (p.cliente_id) setValue('cliente_id', p.cliente_id)
+  }, [processoWatch, processosSel, setValue, clienteFiltro])
 
   const receitas = lancamentos.filter(l => l.tipo === 'receita' && l.status !== 'cancelado').reduce((s, l) => s + l.valor, 0)
   const despesas = lancamentos.filter(l => l.tipo === 'despesa' && l.status !== 'cancelado').reduce((s, l) => s + l.valor, 0)
@@ -70,13 +93,14 @@ export default function LancamentosPage() {
     try {
       const comp = data.data_competencia?.trim() || data.data_vencimento
       const pid = data.plano_conta_id?.trim() || null
+      const procId = data.processo_id?.trim() || null
       await create.mutateAsync({
         ...data,
         escritorio_id:    escritorio.id,
         tipo:             data.tipo,
         categoria:        data.categoria as CategoriaLancamento,
         cliente_id:       data.cliente_id || null,
-        processo_id:      null,
+        processo_id:      procId,
         honorario_id:     null,
         data_competencia: comp,
         plano_conta_id:   pid,
@@ -179,7 +203,7 @@ export default function LancamentosPage() {
           <table className="omni-table">
             <thead>
               <tr>
-                {['Data', 'Descrição', 'Cliente', 'Tipo', 'Valor', 'Status', ''].map(h => (
+                {['Data', 'Descrição', 'Conta', 'Pessoa', 'Processo', 'Tipo', 'Valor', 'Status', ''].map(h => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -195,21 +219,34 @@ export default function LancamentosPage() {
                         <span className="text-[10px] font-medium uppercase tracking-wide text-primary/90 bg-primary/10 px-1.5 py-0.5 rounded">Acordo</span>
                       )}
                     </p>
-                    {(() => {
-                      const p = l as { processo?: { titulo: string; numero_processo: string | null } }
-                      if (!p.processo) return null
-                      return (
-                        <p className="text-xs text-muted-foreground truncate max-w-[160px]">
-                          {p.processo.titulo}
-                          {p.processo.numero_processo ? ` · ${p.processo.numero_processo}` : null}
-                        </p>
-                      )
-                    })()}
                     {l.categoria === 'acordo_parcelado' && l.numero_processo_referencia && !(l as { processo?: unknown }).processo && (
                       <p className="text-xs text-muted-foreground">Ref. proc.: {l.numero_processo_referencia}</p>
                     )}
                   </td>
+                  <td className="text-xs text-muted-foreground max-w-[140px]">
+                    {(() => {
+                      const pl = l as { plano_conta?: { codigo: string; nome: string } | null }
+                      if (!pl.plano_conta) return '—'
+                      return (
+                        <span className="line-clamp-2" title={`${pl.plano_conta.codigo} ${pl.plano_conta.nome}`}>
+                          {pl.plano_conta.codigo} · {pl.plano_conta.nome}
+                        </span>
+                      )
+                    })()}
+                  </td>
                   <td className="text-muted-foreground">{(l as any).cliente?.nome ?? '—'}</td>
+                  <td className="text-xs text-muted-foreground max-w-[130px]">
+                    {(() => {
+                      const p = l as { processo?: { titulo: string; numero_processo: string | null } }
+                      if (!p.processo) return '—'
+                      return (
+                        <span className="line-clamp-2">
+                          {p.processo.titulo}
+                          {p.processo.numero_processo ? ` · ${p.processo.numero_processo}` : ''}
+                        </span>
+                      )
+                    })()}
+                  </td>
                   <td>
                     <span className={cn('badge', l.tipo === 'receita' ? 'badge-success' : 'badge-danger')}>
                       {l.tipo}
@@ -310,13 +347,26 @@ export default function LancamentosPage() {
             </div>
           </div>
           <div>
-            <Label>Cliente</Label>
+            <Label>Pessoa (cliente / fornecedor) — opcional</Label>
             <Select {...register('cliente_id')}>
-              <option value="">Sem cliente</option>
+              <option value="">Escritório / despesa geral (sem pessoa vinculada)</option>
               {clientesData?.clientes.map(c => (
                 <option key={c.id} value={c.id}>{c.nome}</option>
               ))}
             </Select>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Vazio = custo ou receita só do escritório. Cadastre fornecedores em Cadastros.</p>
+          </div>
+          <div>
+            <Label>Processo — opcional</Label>
+            <Select {...register('processo_id')}>
+              <option value="">Nenhum</option>
+              {processosSel.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.titulo}{p.numero_processo ? ` · ${p.numero_processo}` : ''}
+                </option>
+              ))}
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Filtra por pessoa, se selecionada. Ao escolher o processo, a pessoa é preenchida automaticamente.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

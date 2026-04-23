@@ -13,10 +13,11 @@ import { useTarefas, useCreateTarefa, useToggleTarefa } from '@/hooks/useTarefas
 import { useAddMovimentacao } from '@/hooks/useMovimentacoes'
 import { useEscritorio } from '@/hooks/useEscritorio'
 import { formatCurrency, formatDate, formatHoraPrazo, horaPrazoParaBanco } from '@/lib/formatters'
-import { AREA_LABELS, AREA_CORES, PRIORIDADE_CORES, TIPO_PRAZO_LABELS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { OmniSpinner } from '@/components/brand/OmniSpinner'
-import type { TipoPrazo } from '@/types/database'
+import { useOpcoesCadastro, useOpcaoIdPorSlug } from '@/hooks/useOpcoesCadastro'
+import { corAreaHex, opcaoRotulo, prioridadeBadgeClass } from '@/lib/opcoes-helpers'
+import type { PrazoComProcesso } from '@/types/database'
 
 interface Props {
   processoId: string | null
@@ -93,7 +94,13 @@ function PainelConteudo({ processoId, onClose }: { processoId: string; onClose: 
   const [novoPrazoOpen, setNovoPrazoOpen] = useState(false)
   const [prazoTitulo, setPrazoTitulo]     = useState('')
   const [prazoData, setPrazoData]         = useState('')
-  const [prazoTipo, setPrazoTipo]         = useState<TipoPrazo>('prazo_interno')
+  const { data: opcoes = [] } = useOpcoesCadastro('tipo_prazo')
+  const defInterno = useOpcaoIdPorSlug('tipo_prazo', 'prazo_interno', opcoes)
+  const [prazoTipoId, setPrazoTipoId]     = useState('')
+
+  useEffect(() => {
+    if (defInterno && !prazoTipoId) setPrazoTipoId(defInterno)
+  }, [defInterno, prazoTipoId])
   const [prazoHora, setPrazoHora]         = useState('')
 
   const [novaTarefaOpen, setNovaTarefaOpen] = useState(false)
@@ -104,13 +111,13 @@ function PainelConteudo({ processoId, onClose }: { processoId: string; onClose: 
 
   // ── Handlers ──
   const handleAddPrazo = async () => {
-    if (!prazoTitulo.trim() || !prazoData || !escritorio || !processo) return
+    if (!prazoTitulo.trim() || !prazoData || !escritorio || !processo || !prazoTipoId) return
     await criarPrazo.mutateAsync({
       escritorio_id: escritorio.id,
       processo_id: processoId,
       responsavel_id: processo.responsavel_id,
       titulo: prazoTitulo.trim(),
-      tipo: prazoTipo,
+      tipo_prazo_id: prazoTipoId,
       data_prazo: prazoData,
       hora_prazo: horaPrazoParaBanco(prazoHora),
       status: 'pendente',
@@ -158,9 +165,11 @@ function PainelConteudo({ processoId, onClose }: { processoId: string; onClose: 
   const urgentes     = prazos.filter(p => p.dias_restantes <= 3)
   const tarefasTodo  = tarefas.filter(t => t.status !== 'done' && t.status !== 'cancelada')
   const tarefasDone  = tarefas.filter(t => t.status === 'done')
-  const areaCor      = processo ? AREA_CORES[processo.area] ?? '#6b7280' : '#6b7280'
-  const etapa        = (processo as any)?.etapa
-  const cliente      = (processo as any)?.cliente
+  const etapa   = (processo as { etapa?: { nome?: string; cor?: string } })?.etapa
+  const cliente = (processo as { cliente?: { nome?: string } })?.cliente
+  const areaOpt = (processo as { area?: { rotulo?: string; cor?: string | null } })?.area
+  const areaCor = processo ? corAreaHex(areaOpt) : '#6b7280'
+  const priOpt    = (processo as { prioridade?: { rotulo?: string; cor?: string | null; slug?: string } })?.prioridade
 
   return (
     <>
@@ -213,10 +222,10 @@ function PainelConteudo({ processoId, onClose }: { processoId: string; onClose: 
                 className="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium text-white"
                 style={{ backgroundColor: areaCor }}
               >
-                {AREA_LABELS[processo.area] ?? processo.area}
+                {opcaoRotulo(areaOpt)}
               </span>
-              <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', PRIORIDADE_CORES[processo.prioridade])}>
-                {processo.prioridade === 1 ? '↑ Alta' : processo.prioridade === 2 ? 'Normal' : '↓ Baixa'}
+              <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', prioridadeBadgeClass(priOpt))}>
+                {opcaoRotulo(priOpt)}
               </span>
               {etapa && (
                 <span
@@ -285,12 +294,12 @@ function PainelConteudo({ processoId, onClose }: { processoId: string; onClose: 
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <select
-                    value={prazoTipo}
-                    onChange={e => setPrazoTipo(e.target.value as TipoPrazo)}
+                    value={prazoTipoId}
+                    onChange={e => setPrazoTipoId(e.target.value)}
                     className="text-xs px-2 py-1.5 border border-border rounded-lg focus:outline-none bg-white"
                   >
-                    {Object.entries(TIPO_PRAZO_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>{v}</option>
+                    {opcoes.filter(o => o.ativo).map(o => (
+                      <option key={o.id} value={o.id}>{o.rotulo}</option>
                     ))}
                   </select>
                   <div className="grid grid-cols-2 gap-1.5">
@@ -313,7 +322,7 @@ function PainelConteudo({ processoId, onClose }: { processoId: string; onClose: 
                 <div className="flex gap-2">
                   <button
                     onClick={handleAddPrazo}
-                    disabled={!prazoTitulo.trim() || !prazoData || criarPrazo.isPending}
+                    disabled={!prazoTitulo.trim() || !prazoData || !prazoTipoId || criarPrazo.isPending}
                     className="flex-1 text-xs bg-primary text-white py-1.5 rounded-lg hover:bg-primary/90 disabled:opacity-50 transition"
                   >
                     {criarPrazo.isPending ? <OmniSpinner size="xs" variant="dark" /> : 'Salvar'}
@@ -347,7 +356,7 @@ function PainelConteudo({ processoId, onClose }: { processoId: string; onClose: 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate leading-tight">{p.titulo}</p>
                       <p className="text-xs text-muted-foreground/70 mt-0.5">
-                        {TIPO_PRAZO_LABELS[p.tipo] ?? p.tipo} · {formatDate(p.data_prazo)}
+                        {opcaoRotulo((p as PrazoComProcesso).tipo_prazo)} · {formatDate(p.data_prazo)}
                         {formatHoraPrazo(p.hora_prazo) ? ` · ${formatHoraPrazo(p.hora_prazo)}` : ''}
                       </p>
                     </div>

@@ -1,22 +1,24 @@
 'use client'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { Cliente, StatusCliente } from '@/types/database'
+import type { Cliente, PapelErp, StatusCliente } from '@/types/database'
 
 interface ClientesFiltros {
   search?: string
   status?: StatusCliente
+  papel_erp?: PapelErp
   page?: number
   pageSize?: number
 }
 
 export function useClientes(filtros: ClientesFiltros = {}) {
   const supabase = createClient()
-  const { search, status, page = 1, pageSize = 20 } = filtros
+  const { search, status, papel_erp, page = 1, pageSize = 20 } = filtros
   return useQuery({
     queryKey: ['clientes', filtros],
     queryFn: async () => {
       let q = supabase.from('clientes').select('*', { count: 'exact' }).order('nome')
+      if (papel_erp) q = q.eq('papel_erp', papel_erp)
       if (search?.trim()) {
         const t = search.trim()
         const digits = t.replace(/\D/g, '')

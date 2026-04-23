@@ -11,11 +11,7 @@ import { EmptyState } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import type { ProcessoComCliente } from '@/types/database'
 
-const AREA_LABEL: Record<string, string> = {
-  trabalhista: 'Trabalhista', civil: 'Civil', criminal: 'Criminal', tributario: 'Tributário',
-  previdenciario: 'Previdenciário', empresarial: 'Empresarial', familia: 'Família',
-  consumidor: 'Consumidor', administrativo: 'Administrativo', imobiliario: 'Imobiliário', outro: 'Outro',
-}
+import { opcaoRotulo } from '@/lib/opcoes-helpers'
 
 export default function ClienteDetalhePage() {
   const params = useParams()
@@ -131,7 +127,9 @@ export default function ClienteDetalhePage() {
                       </span>
                     )}
                   </td>
-                  <td className="text-xs text-muted-foreground">{AREA_LABEL[p.area] ?? p.area}</td>
+                  <td className="text-xs text-muted-foreground">
+                    {opcaoRotulo((p as { area?: { rotulo?: string } | null }).area)}
+                  </td>
                   <td className="text-xs text-muted-foreground">
                     {p.updated_at ? formatDate(p.updated_at) : p.created_at ? formatDate(p.created_at) : '—'}
                   </td>

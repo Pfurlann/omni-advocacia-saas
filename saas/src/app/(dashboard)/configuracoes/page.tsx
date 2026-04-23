@@ -10,12 +10,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Settings, Kanban, User, Users, Link2 } from 'lucide-react'
+import { Settings, Kanban, User, Users, Link2, ListTree } from 'lucide-react'
 import { OmniSpinner } from '@/components/brand/OmniSpinner'
 import { GoogleCalendarioSettings } from '@/components/configuracoes/GoogleCalendarioSettings'
 import { cn } from '@/lib/utils'
 import { KanbanSettings } from '@/components/configuracoes/KanbanSettings'
 import { EquipeSettings } from '@/components/configuracoes/EquipeSettings'
+import { OpcoesCadastroSettings } from '@/components/configuracoes/OpcoesCadastroSettings'
 import { Button, Input, Label, FormError } from '@/components/ui'
 
 const schema = z.object({
@@ -38,6 +39,7 @@ const TABS = [
   { id: 'escritorio',   label: 'Escritório',   icon: Settings },
   { id: 'equipe',       label: 'Equipe',       icon: Users },
   { id: 'kanban',       label: 'Kanban',       icon: Kanban },
+  { id: 'listas',       label: 'Listas',       icon: ListTree },
   { id: 'integracoes',  label: 'Integrações',  icon: Link2 },
   { id: 'conta',        label: 'Conta',        icon: User },
 ] as const
@@ -306,6 +308,7 @@ function ConfiguracoesPageInner() {
       {tab === 'escritorio' && <EscritorioTab />}
       {tab === 'equipe'     && <EquipeSettings />}
       {tab === 'kanban'     && <KanbanSettings />}
+      {tab === 'listas'     && <OpcoesCadastroSettings />}
       {tab === 'integracoes' && <GoogleCalendarioSettings />}
       {tab === 'conta'      && <ContaTab />}
     </div>

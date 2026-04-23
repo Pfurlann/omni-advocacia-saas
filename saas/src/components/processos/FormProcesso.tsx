@@ -8,7 +8,7 @@ import { useCreateProcesso, useEtapasKanban } from '@/hooks/useProcessos'
 import { useClientes } from '@/hooks/useClientes'
 import { useEscritorio } from '@/hooks/useEscritorio'
 import { useMeuPapelEscritorio, useEscritorioMembros } from '@/hooks/useEscritorioMembros'
-import { AREA_LABELS } from '@/lib/constants'
+import { useOpcoesCadastro, useOpcaoIdPorSlug } from '@/hooks/useOpcoesCadastro'
 import { DATAJUD_TRIBUNAIS } from '@/lib/datajud/tribunais'
 import { X } from 'lucide-react'
 import { OmniSpinner } from '@/components/brand/OmniSpinner'
@@ -17,9 +17,9 @@ const schema = z.object({
   titulo: z.string().min(3, 'Título obrigatório'),
   cliente_id: z.string().min(1, 'Cliente obrigatório'),
   etapa_id: z.string().min(1, 'Etapa obrigatória'),
-  area: z.string(),
+  area_id: z.string().min(1, 'Área obrigatória'),
   polo: z.string(),
-  prioridade: z.number().default(2),
+  prioridade_id: z.string().min(1, 'Prioridade obrigatória'),
   numero_processo: z.string().optional(),
   vara_tribunal: z.string().optional(),
   valor_causa: z.number().optional(),
@@ -42,12 +42,25 @@ export function FormProcesso({ etapaId, onClose, onSuccess }: Props) {
   const { data: me } = useMeuPapelEscritorio()
   const { data: membros = [] } = useEscritorioMembros()
   const createProcesso = useCreateProcesso()
+  const { data: opcoes = [] } = useOpcoesCadastro()
+  const opAreas = opcoes.filter(o => o.categoria === 'area' && o.ativo)
+  const opPri = opcoes.filter(o => o.categoria === 'prioridade_processo' && o.ativo)
+  const idCivil = useOpcaoIdPorSlug('area', 'civil', opcoes)
+  const idP2 = useOpcaoIdPorSlug('prioridade_processo', 'p2', opcoes)
 
   const seededResponsavel = useRef(false)
+  const seededListas = useRef(false)
   const { register, handleSubmit, setValue, formState: { errors } } = useForm<Form>({
     resolver: zodResolver(schema),
-    defaultValues: { etapa_id: etapaId ?? etapas[0]?.id, area: 'civil', polo: 'ativo', prioridade: 2, responsavel_id: '' },
+    defaultValues: { etapa_id: etapaId ?? etapas[0]?.id, polo: 'ativo', responsavel_id: '', area_id: '', prioridade_id: '' },
   })
+
+  useEffect(() => {
+    if (seededListas.current || !idCivil || !idP2) return
+    seededListas.current = true
+    setValue('area_id', idCivil)
+    setValue('prioridade_id', idP2)
+  }, [idCivil, idP2, setValue])
 
   useEffect(() => {
     if (seededResponsavel.current || !me?.isGestor || membros.length === 0) return
@@ -71,9 +84,9 @@ export function FormProcesso({ etapaId, onClose, onSuccess }: Props) {
         titulo: data.titulo,
         cliente_id: data.cliente_id,
         etapa_id: data.etapa_id,
-        area: data.area as any,
+        area_id: data.area_id,
+        prioridade_id: data.prioridade_id,
         polo: data.polo as any,
-        prioridade: data.prioridade as 1|2|3,
         numero_processo: data.numero_processo || null,
         vara_tribunal: data.vara_tribunal || null,
         valor_causa: data.valor_causa || null,
@@ -151,8 +164,9 @@ export function FormProcesso({ etapaId, onClose, onSuccess }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Área</label>
-              <select {...register('area')} className="input">
-                {Object.entries(AREA_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              <select {...register('area_id')} className="input">
+                <option value="">Selecione...</option>
+                {opAreas.map(a => <option key={a.id} value={a.id}>{a.rotulo}</option>)}
               </select>
             </div>
             <div>
@@ -169,10 +183,9 @@ export function FormProcesso({ etapaId, onClose, onSuccess }: Props) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">Prioridade</label>
-              <select {...register('prioridade', { valueAsNumber: true })} className="input">
-                <option value={1}>Alta</option>
-                <option value={2}>Normal</option>
-                <option value={3}>Baixa</option>
+              <select {...register('prioridade_id')} className="input">
+                <option value="">Selecione...</option>
+                {opPri.map(p => <option key={p.id} value={p.id}>{p.rotulo}</option>)}
               </select>
             </div>
             <div>

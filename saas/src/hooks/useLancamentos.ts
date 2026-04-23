@@ -14,13 +14,18 @@ interface LancamentosFiltros {
 }
 
 export function useLancamentos(filtros: LancamentosFiltros = {}) {
-  const supabase = createClient()
   return useQuery({
     queryKey: ['lancamentos', filtros],
     queryFn: async () => {
+      const supabase = createClient()
       let q = supabase
         .from('lancamentos')
-        .select(`*, cliente:clientes(id,nome), processo:processos(id,titulo,numero_processo)`)
+        .select(`
+          *,
+          cliente:clientes(id,nome,papel_erp),
+          processo:processos(id,titulo,numero_processo,cliente_id),
+          plano_conta:plano_contas(id,codigo,nome)
+        `)
         .order('data_vencimento', { ascending: false })
       if (filtros.tipo) q = q.eq('tipo', filtros.tipo)
       if (filtros.status) q = q.eq('status', filtros.status)
@@ -34,18 +39,19 @@ export function useLancamentos(filtros: LancamentosFiltros = {}) {
       const { data, error } = await q
       if (error) throw error
       return (data ?? []) as (Lancamento & {
-        cliente?: { id: string; nome: string }
-        processo?: { id: string; titulo: string; numero_processo: string | null }
+        cliente?: { id: string; nome: string; papel_erp?: string }
+        processo?: { id: string; titulo: string; numero_processo: string | null; cliente_id: string }
+        plano_conta?: { id: string; codigo: string; nome: string } | null
       })[]
     },
   })
 }
 
 export function useCreateLancamento() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (values: Omit<Lancamento, 'id' | 'created_at' | 'updated_at'>) => {
+      const supabase = createClient()
       const { data, error } = await supabase.from('lancamentos').insert(values).select().single()
       if (error) throw error
       return data
@@ -57,11 +63,11 @@ export function useCreateLancamento() {
 }
 
 export function useCreateLancamentosLote() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (rows: Omit<Lancamento, 'id' | 'created_at' | 'updated_at'>[]) => {
       if (rows.length === 0) return []
+      const supabase = createClient()
       const { data, error } = await supabase.from('lancamentos').insert(rows).select()
       if (error) throw error
       return (data ?? []) as Lancamento[]
@@ -73,10 +79,10 @@ export function useCreateLancamentosLote() {
 }
 
 export function useMarcarPago() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
+      const supabase = createClient()
       const { error } = await supabase
         .from('lancamentos')
         .update({ status: 'pago', data_pagamento: new Date().toISOString().split('T')[0] })
@@ -90,10 +96,10 @@ export function useMarcarPago() {
 }
 
 export function useDeleteLancamento() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
+      const supabase = createClient()
       const { error } = await supabase.from('lancamentos').delete().eq('id', id)
       if (error) throw error
     },

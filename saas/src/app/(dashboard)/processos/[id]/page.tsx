@@ -1,5 +1,5 @@
 'use client'
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import { useProcesso, useEtapasKanban, useUpdateProcesso } from '@/hooks/useProcessos'
 import { useMovimentacoes, useAddMovimentacao } from '@/hooks/useMovimentacoes'
 import { useTarefas, useCreateTarefa, useToggleTarefa, useDeleteTarefa } from '@/hooks/useTarefas'
@@ -7,10 +7,11 @@ import { usePrazos, useCreatePrazo, useConcluirPrazo } from '@/hooks/usePrazos'
 import { useLancamentos } from '@/hooks/useLancamentos'
 import { useEscritorio } from '@/hooks/useEscritorio'
 import {
-  AREA_LABELS, AREA_CORES, PRIORIDADE_LABELS, PRIORIDADE_CORES,
-  TIPO_MOV_LABELS, TIPO_MOV_CORES, TIPO_PRAZO_LABELS,
+  TIPO_MOV_LABELS, TIPO_MOV_CORES,
   STATUS_PRAZO_CORES, STATUS_LANCAMENTO_LABELS, STATUS_LANCAMENTO_CORES,
 } from '@/lib/constants'
+import { corAreaHex, opcaoRotulo, prioridadeBadgeClass } from '@/lib/opcoes-helpers'
+import { useOpcoesCadastro, useOpcaoIdPorSlug } from '@/hooks/useOpcoesCadastro'
 import { formatCurrency, formatDate, formatDateRelative, formatHoraPrazo, getDiasRestantes, horaPrazoParaBanco } from '@/lib/formatters'
 import { toast } from 'sonner'
 import { ArrowLeft, CheckSquare, Square, Trash2, Plus, Send, AlertTriangle, Pencil } from 'lucide-react'
@@ -21,7 +22,7 @@ import { DataJudPanel } from '@/components/processos/DataJudPanel'
 import { FormEditarProcesso } from '@/components/processos/FormEditarProcesso'
 import { ProcessoDocumentos } from '@/components/processos/ProcessoDocumentos'
 import { Button, Select, Input } from '@/components/ui'
-import type { Processo } from '@/types/database'
+import type { Processo, PrazoComProcesso } from '@/types/database'
 
 export default function ProcessoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -45,8 +46,15 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
   const [novaTarefa, setNovaTarefa]   = useState('')
   const [aba, setAba]                 = useState<'tarefas' | 'prazos' | 'documentos' | 'financeiro'>('tarefas')
   const [showNovoPrazo, setShowNovoPrazo] = useState(false)
-  const [novoPrazo, setNovoPrazo]     = useState({ titulo: '', tipo: 'prazo_interno', data_prazo: '', hora_prazo: '' })
+  const [novoPrazo, setNovoPrazo]     = useState({ titulo: '', tipo_prazo_id: '', data_prazo: '', hora_prazo: '' })
   const [editarProcesso, setEditarProcesso] = useState(false)
+  const { data: opTipos = [] }      = useOpcoesCadastro('tipo_prazo')
+  const defTipoInterno              = useOpcaoIdPorSlug('tipo_prazo', 'prazo_interno', opTipos)
+
+  useEffect(() => {
+    if (!defTipoInterno) return
+    setNovoPrazo(p => (p.tipo_prazo_id ? p : { ...p, tipo_prazo_id: defTipoInterno }))
+  }, [defTipoInterno])
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -57,7 +65,12 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
     <div className="text-center py-20 text-muted-foreground text-sm">Processo não encontrado</div>
   )
 
-  const areaCor   = AREA_CORES[processo.area] ?? '#6b7280'
+  type ProcessoVista = Processo & {
+    area?: { rotulo?: string; cor?: string | null } | null
+    prioridade?: { rotulo?: string; cor?: string | null; slug?: string } | null
+  }
+  const proc = processo as unknown as ProcessoVista
+  const areaCor = corAreaHex(proc.area)
   const receitas  = lancamentos.filter(l => l.tipo === 'receita' && l.status !== 'cancelado').reduce((s, l) => s + l.valor, 0)
   const pendente  = lancamentos.filter(l => l.tipo === 'receita' && l.status === 'pendente').reduce((s, l) => s + l.valor, 0)
 
@@ -77,15 +90,15 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
   }
 
   const salvarPrazo = async () => {
-    if (!novoPrazo.titulo || !novoPrazo.data_prazo || !escritorio) return
+    if (!novoPrazo.titulo || !novoPrazo.data_prazo || !escritorio || !novoPrazo.tipo_prazo_id) return
     await createPrazo.mutateAsync({
       processo_id: id, escritorio_id: escritorio.id, responsavel_id: processo.responsavel_id,
-      titulo: novoPrazo.titulo, tipo: novoPrazo.tipo as any, data_prazo: novoPrazo.data_prazo,
+      titulo: novoPrazo.titulo, tipo_prazo_id: novoPrazo.tipo_prazo_id, data_prazo: novoPrazo.data_prazo,
       status: 'pendente', alerta_dias: 3, descricao: null,
       hora_prazo: horaPrazoParaBanco(novoPrazo.hora_prazo),
     })
     setShowNovoPrazo(false)
-    setNovoPrazo({ titulo: '', tipo: 'prazo_interno', data_prazo: '', hora_prazo: '' })
+    setNovoPrazo({ titulo: '', tipo_prazo_id: defTipoInterno ?? '', data_prazo: '', hora_prazo: '' })
     toast.success('Prazo adicionado', {
       action: { label: 'Agenda', onClick: () => { window.location.href = '/agenda' } },
     })
@@ -107,10 +120,10 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-2">
             <span className="badge text-white" style={{ backgroundColor: areaCor }}>
-              {AREA_LABELS[processo.area]}
+              {opcaoRotulo(proc.area)}
             </span>
-            <span className={cn('badge', PRIORIDADE_CORES[processo.prioridade])}>
-              {PRIORIDADE_LABELS[processo.prioridade]} prioridade
+            <span className={cn('badge', prioridadeBadgeClass(proc.prioridade))}>
+              {opcaoRotulo(proc.prioridade)} prioridade
             </span>
             <Select
               value={processo.etapa_id}
@@ -255,10 +268,10 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
                         placeholder="Título do prazo"
                       />
                       <Select
-                        value={novoPrazo.tipo}
-                        onChange={e => setNovoPrazo(p => ({ ...p, tipo: e.target.value }))}
+                        value={novoPrazo.tipo_prazo_id}
+                        onChange={e => setNovoPrazo(p => ({ ...p, tipo_prazo_id: e.target.value }))}
                       >
-                        {Object.entries(TIPO_PRAZO_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                        {opTipos.filter(o => o.ativo).map(o => <option key={o.id} value={o.id}>{o.rotulo}</option>)}
                       </Select>
                       <div className="grid grid-cols-2 gap-2">
                         <Input
@@ -290,7 +303,7 @@ export default function ProcessoPage({ params }: { params: Promise<{ id: string 
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{p.titulo}</p>
                           <p className="text-xs text-muted-foreground">
-                            {TIPO_PRAZO_LABELS[p.tipo]} · {formatDate(p.data_prazo)}
+                            {opcaoRotulo((p as PrazoComProcesso).tipo_prazo)} · {formatDate(p.data_prazo)}
                             {formatHoraPrazo(p.hora_prazo) ? ` · ${formatHoraPrazo(p.hora_prazo)}` : ''}
                           </p>
                         </div>

@@ -10,4 +10,6 @@ export function invalidateModuloFinanceiro(qc: QueryClient) {
   void qc.invalidateQueries({ queryKey: ['plano-contas'] })
   void qc.invalidateQueries({ queryKey: ['fiscal-cfop'] })
   void qc.invalidateQueries({ queryKey: ['notas-fiscais'] })
+  void qc.invalidateQueries({ queryKey: ['fin-allocacao-custos'] })
+  void qc.invalidateQueries({ queryKey: ['processos-lanc-select'] })
 }

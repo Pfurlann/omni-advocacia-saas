@@ -16,7 +16,7 @@ const nav = [
   { href: '/processos',     label: 'Processos',      icon: FileText },
   { href: '/agenda',        label: 'Agenda',         icon: CalendarDays },
   { href: '/prazos',        label: 'Prazos',         icon: Calendar,  badge: true },
-  { href: '/clientes',      label: 'Clientes',       icon: Users },
+  { href: '/clientes',      label: 'Cadastros',     icon: Users },
   { href: '/financeiro',    label: 'Financeiro',     icon: DollarSign },
 ]
 
@@ -35,7 +35,7 @@ export function Sidebar({ compact = false }: Props) {
   return (
     <aside
       className={cn(
-        'h-full w-full min-h-0 flex flex-col sidebar-scroll overflow-y-auto overflow-x-hidden',
+        'omni-pattern h-full w-full min-h-0 flex flex-col sidebar-scroll overflow-y-auto overflow-x-hidden',
         'bg-[hsl(var(--sidebar-bg))] shadow-[2px_0_12px_rgba(0,0,0,0.04)]',
       )}
     >
