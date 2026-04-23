@@ -33,20 +33,23 @@ export type AgendaFeedResponse = {
   connected: boolean
 }
 
+/** Partilhado com prefetch (dashboard) para alinhar cache com a página Agenda. */
+export async function fetchAgendaFeed(from: string, to: string): Promise<AgendaFeedResponse> {
+  const u = new URL('/api/google-calendar/feed', window.location.origin)
+  u.searchParams.set('from', from)
+  u.searchParams.set('to', to)
+  const r = await fetch(u.toString(), { credentials: 'include' })
+  if (!r.ok) {
+    const t = await r.text()
+    throw new Error(t || `HTTP ${r.status}`)
+  }
+  return r.json()
+}
+
 export function useAgendaFeed(from: string, to: string) {
   return useQuery({
     queryKey: ['agendaFeed', from, to],
-    queryFn: async (): Promise<AgendaFeedResponse> => {
-      const u = new URL('/api/google-calendar/feed', window.location.origin)
-      u.searchParams.set('from', from)
-      u.searchParams.set('to', to)
-      const r = await fetch(u.toString(), { credentials: 'include' })
-      if (!r.ok) {
-        const t = await r.text()
-        throw new Error(t || `HTTP ${r.status}`)
-      }
-      return r.json()
-    },
+    queryFn: () => fetchAgendaFeed(from, to),
     enabled: Boolean(from && to),
     staleTime: 3 * 60 * 1000,      // dados frescos por 3 min — sem refetch ao navegar
     gcTime:    10 * 60 * 1000,     // mantém no cache por 10 min

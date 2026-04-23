@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { SidebarNavProvider, useSidebarNav } from '@/contexts/SidebarNavContext'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
+import { AgendaPrefetch } from '@/components/agenda/AgendaPrefetch'
 
 function NavColumn() {
   const { expanded } = useSidebarNav()
@@ -23,6 +24,7 @@ function NavColumn() {
 function FrameInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
+      <AgendaPrefetch />
       <NavColumn />
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
