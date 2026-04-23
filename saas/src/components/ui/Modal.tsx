@@ -9,20 +9,31 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl'
   className?: string
+  /**
+   * Abrir por cima de outro modal (ex.: cadastro sobre o lançamento).
+   * Escape fecha só este, sem propagar.
+   */
+  stack?: boolean
 }
 
-const sizeClass = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' }
+const sizeClass = {
+  sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl', '2xl': 'max-w-3xl',
+}
 
-export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
-  // Fechar com Escape
+export function Modal({ open, onClose, title, children, size = 'md', className, stack = false }: ModalProps) {
+  // Fechar com Escape; em `stack` usa captura para não fechar o modal de baixo
   useEffect(() => {
     if (!open) return
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [open, onClose])
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      if (stack) e.stopImmediatePropagation()
+      onClose()
+    }
+    window.addEventListener('keydown', handler, stack)
+    return () => window.removeEventListener('keydown', handler, stack)
+  }, [open, onClose, stack])
 
   // Trava o scroll de fundo enquanto o modal está aberto
   useEffect(() => {
@@ -39,7 +50,14 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
 
   return createPortal(
     (
-      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div
+        className={cn(
+          'fixed inset-0 flex items-center justify-center p-4',
+          stack ? 'z-[10120]' : 'z-[10000]',
+        )}
+        role="dialog"
+        aria-modal="true"
+      >
         <div
           className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
           onClick={onClose}

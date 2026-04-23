@@ -356,7 +356,7 @@ export default function LancamentosPage() {
             label="Pessoa (cliente / fornecedor) — opcional"
             value={watch('cliente_id') ?? ''}
             onChange={id => setValue('cliente_id', id, { shouldValidate: true })}
-            hint="Sem seleção, o lançamento fica só do escritório. Cadastros em Pessoas."
+            hint="Sem pessoa: lançamento só do escritório. O ícone de pessoas abre cadastros na mesma tela; a lupa, a busca ampliada."
           />
           <VinculoPickerProcesso
             label="Processo — opcional"

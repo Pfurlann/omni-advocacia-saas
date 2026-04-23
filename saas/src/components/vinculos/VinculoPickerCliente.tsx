@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover'
 import { useClientes, useCliente } from '@/hooks/useClientes'
 import { ModalPesquisaVinculo } from './ModalPesquisaVinculo'
-import { Search, X, ChevronsUpDown, User, Building2 } from 'lucide-react'
+import { ModalCadastrosPessoas } from '@/components/clientes/ModalCadastrosPessoas'
+import { Search, X, ChevronsUpDown, User, Building2, UsersRound } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PAPEL_ERP_LABELS } from '@/lib/constants'
 import type { Cliente } from '@/types/database'
@@ -32,6 +33,7 @@ export function VinculoPickerCliente({ value, onChange, label, hint, disabled, n
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [modal, setModal] = useState(false)
+  const [cadastrosOpen, setCadastrosOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: page } = useClientes({ pageSize: 500, page: 1 })
   const pool = page?.clientes ?? []
@@ -177,7 +179,17 @@ export function VinculoPickerCliente({ value, onChange, label, hint, disabled, n
           variant="secondary"
           className="h-11 w-11 shrink-0 p-0 rounded-xl border border-border"
           disabled={disabled}
-          title="Pesquisa em tela cheia"
+          title="Abrir tela de cadastros (listagem e nova pessoa) sem sair do lançamento"
+          onClick={() => setCadastrosOpen(true)}
+        >
+          <UsersRound className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          className="h-11 w-11 shrink-0 p-0 rounded-xl border border-border"
+          disabled={disabled}
+          title="Pesquisa ampliada"
           onClick={() => setModal(true)}
         >
           <Search className="h-4 w-4" />
@@ -193,6 +205,15 @@ export function VinculoPickerCliente({ value, onChange, label, hint, disabled, n
         onSelect={c => {
           pick(c)
           setModal(false)
+        }}
+      />
+
+      <ModalCadastrosPessoas
+        open={cadastrosOpen}
+        onClose={() => setCadastrosOpen(false)}
+        onPessoaSelecionada={id => {
+          onChange(id)
+          setCadastrosOpen(false)
         }}
       />
     </div>
