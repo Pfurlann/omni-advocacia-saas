@@ -5,6 +5,9 @@ import { Providers } from '@/components/providers'
 
 const inter = Inter({ subsets: ['latin'] })
 
+/** Evita pré-render estático no build (ex.: Vercel sem env) a chamar o cliente Supabase. */
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'OMNI',
   description: 'Gerencie processos, prazos, clientes e financeiro do seu escritório',
