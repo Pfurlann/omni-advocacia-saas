@@ -5,10 +5,11 @@ import { useEscritorio, useSetEscritorioAtivo } from '@/hooks/useEscritorio'
 import { useMeusEscritorios } from '@/hooks/useMeusEscritorios'
 import { useProfile } from '@/hooks/useProfile'
 import { toast } from 'sonner'
-import { LogOut, Settings, ChevronDown, Building2, Menu } from 'lucide-react'
+import { LogOut, Settings, ChevronDown, Building2, Menu, Search } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useSidebarNav } from '@/contexts/SidebarNavContext'
+import { useBuscaGlobalOptional } from '@/contexts/BuscaGlobalContext'
 
 const DIAS_PT  = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const MESES_PT = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.']
@@ -32,6 +33,7 @@ export function Header() {
   const setAtivo = useSetEscritorioAtivo()
   const [open, setOpen] = useState(false)
   const { expanded: navExpanded, toggle: toggleNav } = useSidebarNav()
+  const buscaGlobal = useBuscaGlobalOptional()
 
   const logout = async () => {
     const supabase = createClient()
@@ -56,9 +58,9 @@ export function Header() {
   })()
 
   return (
-    <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6 shrink-0">
+    <header className="h-14 bg-card border-b border-border flex items-center gap-3 px-4 sm:px-6 shrink-0">
       {/* ── Esquerda: toggle sidebar + data + OAB ── */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 shrink-0">
         <button
           type="button"
           onClick={toggleNav}
@@ -81,8 +83,24 @@ export function Header() {
         )}
       </div>
 
+      {/* ── Centro: busca estilo ERP (CIGAM) ── */}
+      {buscaGlobal && (
+        <div className="flex-1 min-w-0 flex justify-center">
+          <button
+            type="button"
+            onClick={() => buscaGlobal.setOpen(true)}
+            className="flex items-center gap-2 w-full max-w-lg h-9 px-3 rounded-lg border border-border/80 bg-secondary/20 text-left text-sm text-muted-foreground hover:bg-secondary/50 hover:text-foreground transition-colors"
+            title="Abrir busca (⌘K, Ctrl+K, com Shift se precisar, /, F3). Menu lateral: Busca global."
+          >
+            <Search className="h-4 w-4 shrink-0 opacity-80" />
+            <span className="truncate">Pesquisar pessoas e processos…</span>
+            <kbd className="hidden sm:inline text-[10px] font-mono text-muted-foreground/80 ml-auto shrink-0">F3</kbd>
+          </button>
+        </div>
+      )}
+
       {/* ── Direita: switcher, nome do escritório, avatar ── */}
-      <div className="flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-2 shrink-0 min-w-0">
         {listaEsc.length > 1 && (
           <div className="hidden sm:flex items-center gap-1.5 pr-1 border-r border-border mr-1">
             <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

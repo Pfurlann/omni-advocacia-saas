@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { SidebarNavProvider, useSidebarNav } from '@/contexts/SidebarNavContext'
+import { BuscaGlobalProvider } from '@/contexts/BuscaGlobalContext'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 import { AgendaPrefetch } from '@/components/agenda/AgendaPrefetch'
@@ -37,7 +38,9 @@ function FrameInner({ children }: { children: React.ReactNode }) {
 export function DashboardFrame({ children }: { children: React.ReactNode }) {
   return (
     <SidebarNavProvider>
-      <FrameInner>{children}</FrameInner>
+      <BuscaGlobalProvider>
+        <FrameInner>{children}</FrameInner>
+      </BuscaGlobalProvider>
     </SidebarNavProvider>
   )
 }

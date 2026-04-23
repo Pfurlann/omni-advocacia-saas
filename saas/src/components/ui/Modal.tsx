@@ -9,11 +9,11 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
-const sizeClass = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' }
+const sizeClass = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg', xl: 'max-w-2xl' }
 
 export function Modal({ open, onClose, title, children, size = 'md', className }: ModalProps) {
   // Fechar com Escape
@@ -39,7 +39,7 @@ export function Modal({ open, onClose, title, children, size = 'md', className }
 
   return createPortal(
     (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
         <div
           className="absolute inset-0 bg-foreground/40 backdrop-blur-sm"
           onClick={onClose}

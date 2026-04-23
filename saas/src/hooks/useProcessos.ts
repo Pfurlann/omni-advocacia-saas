@@ -22,6 +22,8 @@ interface ProcessosFiltros {
   prazo_vencimento?: KanbanFiltroVencimento
   /** ID em opcoes_cadastro (categoria tipo_prazo) */
   tipo_prazo?: KanbanFiltroTipoPrazo
+  /** Quando `false`, não executa a query (ex.: modal de busca fechado). */
+  enabled?: boolean
 }
 
 export function processoMatchesKanbanPrazoFiltros(
@@ -84,9 +86,10 @@ export function useProcessos(filtros: ProcessosFiltros = {}) {
   const ft = filtros.tipo_prazo ?? 'todos'
   const buscandoLivre = filtros.buscaLivre !== undefined
   const buscaLivreOk = !buscandoLivre || (filtros.buscaLivre?.trim().length ?? 0) >= 2
+  const enabledFlag = filtros.enabled !== false
   return useQuery({
     queryKey: ['processos', filtros],
-    enabled: buscaLivreOk,
+    enabled: enabledFlag && buscaLivreOk,
     queryFn: async () => {
       const supabase = createClient()
       let q = supabase

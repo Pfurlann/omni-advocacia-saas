@@ -9,13 +9,16 @@ interface ClientesFiltros {
   papel_erp?: PapelErp
   page?: number
   pageSize?: number
+  /** Quando `false`, a query não roda (ex.: busca global fechada). */
+  enabled?: boolean
 }
 
 export function useClientes(filtros: ClientesFiltros = {}) {
   const supabase = createClient()
-  const { search, status, papel_erp, page = 1, pageSize = 20 } = filtros
+  const { search, status, papel_erp, page = 1, pageSize = 20, enabled = true } = filtros
   return useQuery({
     queryKey: ['clientes', filtros],
+    enabled,
     queryFn: async () => {
       let q = supabase.from('clientes').select('*', { count: 'exact' }).order('nome')
       if (papel_erp) q = q.eq('papel_erp', papel_erp)

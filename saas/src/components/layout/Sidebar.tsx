@@ -7,8 +7,9 @@ import { useEscritorio } from '@/hooks/useEscritorio'
 import { OmniLogo } from '@/components/brand/OmniLogo'
 import {
   LayoutDashboard, Kanban, FileText, Calendar,
-  Users, DollarSign, Settings, CalendarDays,
+  Users, DollarSign, Settings, CalendarDays, Search,
 } from 'lucide-react'
+import { useBuscaGlobalOptional } from '@/contexts/BuscaGlobalContext'
 
 const nav = [
   { href: '/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
@@ -31,6 +32,7 @@ export function Sidebar({ compact = false }: Props) {
   const { data: prazos } = usePrazosUrgentes()
   const { data: escritorio } = useEscritorio()
   const urgentes  = prazos?.filter(p => p.dias_restantes <= 3).length ?? 0
+  const buscaGlobal = useBuscaGlobalOptional()
 
   return (
     <aside
@@ -65,6 +67,32 @@ export function Sidebar({ compact = false }: Props) {
           </>
         )}
       </div>
+
+      {buscaGlobal && (
+        <div className={cn('px-2 pb-1.5', compact && 'px-1.5')}>
+          <button
+            type="button"
+            onClick={() => buscaGlobal.setOpen(true)}
+            title="Abrir busca global (também: ⌘K, Ctrl+K, ⌘⇧+K, F3, / fora de campos)"
+            className={cn(
+              'w-full flex items-center rounded-lg font-medium transition-colors duration-150',
+              'outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--sidebar-bg))]',
+              'text-[hsl(var(--sidebar-text))] hover:text-white/95 hover:bg-white/[0.05]',
+              compact
+                ? 'justify-center p-0 h-10 w-10 mx-auto'
+                : 'gap-2.5 px-2.5 py-2 text-[13px] leading-tight',
+            )}
+          >
+            <span className="relative flex items-center justify-center shrink-0">
+              <Search
+                className={cn('shrink-0', compact ? 'h-[1.15rem] w-[1.15rem]' : 'h-4 w-4')}
+                strokeWidth={2}
+              />
+            </span>
+            {!compact && <span className="flex-1 min-w-0 text-left">Busca global</span>}
+          </button>
+        </div>
+      )}
 
       <nav className={cn('flex-1 py-2', compact ? 'px-1.5 space-y-1' : 'px-2 space-y-0.5')}>
         <NavSection items={nav} pathname={pathname} urgentes={urgentes} compact={compact} />
