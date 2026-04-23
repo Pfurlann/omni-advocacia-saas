@@ -37,10 +37,10 @@ export async function fetchEscritorioAtual(supabase: SupabaseClient): Promise<Es
 }
 
 export function useCreateEscritorio() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (values: Pick<Escritorio, 'nome'> & Partial<Pick<Escritorio, 'oab' | 'telefone'>>) => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Sessão expirada')
       const { data, error } = await supabase
@@ -79,19 +79,21 @@ export function useCreateEscritorio() {
 }
 
 export function useEscritorio() {
-  const supabase = createClient()
   return useQuery({
     queryKey: ['escritorio'],
-    queryFn: () => fetchEscritorioAtual(supabase),
+    queryFn: () => {
+      const supabase = createClient()
+      return fetchEscritorioAtual(supabase)
+    },
     staleTime: 5 * 60 * 1000,
   })
 }
 
 export function useUpdateEscritorio() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (values: Partial<Escritorio>) => {
+      const supabase = createClient()
       const esc = await fetchEscritorioAtual(supabase)
       if (!esc) throw new Error('Escritório não encontrado')
       const { data, error } = await supabase
@@ -115,10 +117,10 @@ export function useUpdateEscritorio() {
  * Alterna o escritório ativo (kanban, cadastros, RLS vía my_escritorio_id).
  */
 export function useSetEscritorioAtivo() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (escritorioId: string) => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Sessão expirada')
       const { error } = await supabase

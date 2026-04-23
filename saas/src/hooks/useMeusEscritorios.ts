@@ -7,10 +7,10 @@ import type { Escritorio } from '@/types/database'
  * Todos os escritórios em que o usuário é dono ou membro ativo.
  */
 export function useMeusEscritorios() {
-  const supabase = createClient()
   return useQuery({
     queryKey: ['meus-escritorios'],
     queryFn: async (): Promise<Escritorio[]> => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return []
       const { data: own, error: oErr } = await supabase.from('escritorios').select('*').eq('owner_id', user.id)

@@ -61,10 +61,10 @@ export function processoMatchesKanbanPrazoFiltros(
 }
 
 export function useEtapasKanban() {
-  const supabase = createClient()
   return useQuery({
     queryKey: ['etapas'],
     queryFn: async () => {
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('etapas_kanban')
         .select('*')
@@ -77,7 +77,6 @@ export function useEtapasKanban() {
 }
 
 export function useProcessos(filtros: ProcessosFiltros = {}) {
-  const supabase = createClient()
   const fv = filtros.prazo_vencimento ?? 'todos'
   const ft = filtros.tipo_prazo ?? 'todos'
   const buscandoLivre = filtros.buscaLivre !== undefined
@@ -86,6 +85,7 @@ export function useProcessos(filtros: ProcessosFiltros = {}) {
     queryKey: ['processos', filtros],
     enabled: buscaLivreOk,
     queryFn: async () => {
+      const supabase = createClient()
       let q = supabase
         .from('processos')
         .select(`
@@ -125,10 +125,10 @@ export function useProcessos(filtros: ProcessosFiltros = {}) {
 }
 
 export function useProcesso(id: string) {
-  const supabase = createClient()
   return useQuery({
     queryKey: ['processos', id],
     queryFn: async () => {
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('processos')
         .select(`
@@ -152,10 +152,10 @@ export function useProcesso(id: string) {
 }
 
 export function useCreateProcesso() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (values: Omit<Processo, 'id' | 'created_at' | 'updated_at'>) => {
+      const supabase = createClient()
       const { data, error } = await supabase.from('processos').insert(values).select().single()
       if (error) throw error
       return data
@@ -165,10 +165,10 @@ export function useCreateProcesso() {
 }
 
 export function useUpdateProcesso() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, ...values }: Partial<Processo> & { id: string }) => {
+      const supabase = createClient()
       const { data, error } = await supabase.from('processos').update(values).eq('id', id).select().single()
       if (error) throw error
       return data
@@ -181,10 +181,10 @@ export function useUpdateProcesso() {
 }
 
 export function useMoverProcesso() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, etapa_id, kanban_ordem }: { id: string; etapa_id: string; kanban_ordem: number }) => {
+      const supabase = createClient()
       const { error } = await supabase.from('processos').update({ etapa_id, kanban_ordem }).eq('id', id)
       if (error) throw error
     },
@@ -194,10 +194,10 @@ export function useMoverProcesso() {
 
 /** Persiste etapa + ordem de todos os cards do layout (após drag). */
 export function usePersistirLayoutKanban() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (rows: { id: string; etapa_id: string; kanban_ordem: number }[]) => {
+      const supabase = createClient()
       for (const r of rows) {
         const { error } = await supabase
           .from('processos')

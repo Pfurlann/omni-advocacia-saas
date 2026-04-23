@@ -20,10 +20,10 @@ export interface MeuPapelEscritorio {
 }
 
 export function useMeuPapelEscritorio() {
-  const supabase = createClient()
   return useQuery({
     queryKey: ['meu-papel-escritorio'],
     queryFn: async (): Promise<MeuPapelEscritorio | null> => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
       const esc = await fetchEscritorioAtual(supabase)

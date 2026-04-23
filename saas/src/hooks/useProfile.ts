@@ -4,10 +4,10 @@ import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
 
 export function useProfile() {
-  const supabase = createClient()
   return useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
       const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -19,10 +19,10 @@ export function useProfile() {
 }
 
 export function useUpdateProfile() {
-  const supabase = createClient()
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (values: Partial<Pick<Profile, 'full_name' | 'avatar_url' | 'active_escritorio_id'>>) => {
+      const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Sessão expirada')
       const { data, error } = await supabase
