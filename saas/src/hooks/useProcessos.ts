@@ -250,10 +250,30 @@ export function usePersistirLayoutKanban() {
   })
 }
 
+/** Uma linha p/ rótulo em pickers (evita puxar o processo completo). */
+export function useProcessoResumo(id: string | undefined) {
+  return useQuery({
+    queryKey: ['processos', 'resumo', id],
+    enabled: Boolean(id),
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('processos')
+        .select('id, titulo, numero_processo, cliente_id')
+        .eq('id', id!)
+        .single()
+      if (error) throw error
+      return data as { id: string; titulo: string; numero_processo: string | null; cliente_id: string }
+    },
+    staleTime: 60_000,
+  })
+}
+
 /** Lista leve para selects (lançamentos): não filtra por prazos do Kanban. */
-export function useProcessosSelectLancamento(clienteId?: string | null) {
+export function useProcessosSelectLancamento(clienteId?: string | null, queryEnabled: boolean = true) {
   return useQuery({
     queryKey: ['processos-lanc-select', clienteId ?? 'all'],
+    enabled: queryEnabled,
     queryFn: async () => {
       const supabase = createClient()
       let q = supabase

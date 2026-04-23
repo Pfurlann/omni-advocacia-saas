@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useLancamentos, useCreateLancamento, useMarcarPago, useDeleteLancamento } from '@/hooks/useLancamentos'
-import { useProcessosSelectLancamento } from '@/hooks/useProcessos'
+import { useProcessoResumo } from '@/hooks/useProcessos'
 import { usePlanoContasAnaliticos } from '@/hooks/usePlanoContas'
 import { useClientes } from '@/hooks/useClientes'
 import { useEscritorio } from '@/hooks/useEscritorio'
@@ -19,6 +19,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import type { TipoLancamento, StatusLancamento, CategoriaLancamento } from '@/types/database'
 import { Button, Select, Input, Label, FormError, Modal, EmptyState } from '@/components/ui'
+import { VinculoPickerCliente, VinculoPickerProcesso } from '@/components/vinculos'
 
 const schema = z.object({
   tipo:              z.enum(['receita', 'despesa']),
@@ -71,18 +72,23 @@ export default function LancamentosPage() {
   const tipoWatch     = watch('tipo')
   const clienteFiltro = watch('cliente_id')?.trim() || null
   const processoWatch = watch('processo_id')
-  const { data: processosSel = [] } = useProcessosSelectLancamento(clienteFiltro)
+  const { data: resumoProcesso } = useProcessoResumo(processoWatch || undefined)
   const categorias = tipoWatch === 'receita' ? CATEGORIA_RECEITA_LABELS : CATEGORIA_DESPESA_LABELS
 
+  /** Preenche pessoa a partir do processo escolhido; limpa processo se conflitar com a pessoa filtrada. */
   useEffect(() => {
     if (!processoWatch) return
-    const p = processosSel.find(x => x.id === processoWatch)
-    if (!p) {
-      setValue('processo_id', '')
-      return
+    if (resumoProcesso?.id === processoWatch && resumoProcesso.cliente_id) {
+      setValue('cliente_id', resumoProcesso.cliente_id)
     }
-    if (p.cliente_id) setValue('cliente_id', p.cliente_id)
-  }, [processoWatch, processosSel, setValue, clienteFiltro])
+  }, [processoWatch, resumoProcesso, setValue])
+
+  useEffect(() => {
+    if (!processoWatch || !clienteFiltro || !resumoProcesso || resumoProcesso.id !== processoWatch) return
+    if (resumoProcesso.cliente_id !== clienteFiltro) {
+      setValue('processo_id', '')
+    }
+  }, [clienteFiltro, processoWatch, resumoProcesso, setValue])
 
   const receitas = lancamentos.filter(l => l.tipo === 'receita' && l.status !== 'cancelado').reduce((s, l) => s + l.valor, 0)
   const despesas = lancamentos.filter(l => l.tipo === 'despesa' && l.status !== 'cancelado').reduce((s, l) => s + l.valor, 0)
@@ -346,28 +352,19 @@ export default function LancamentosPage() {
               </Select>
             </div>
           </div>
-          <div>
-            <Label>Pessoa (cliente / fornecedor) — opcional</Label>
-            <Select {...register('cliente_id')}>
-              <option value="">Escritório / despesa geral (sem pessoa vinculada)</option>
-              {clientesData?.clientes.map(c => (
-                <option key={c.id} value={c.id}>{c.nome}</option>
-              ))}
-            </Select>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Vazio = custo ou receita só do escritório. Cadastre fornecedores em Cadastros.</p>
-          </div>
-          <div>
-            <Label>Processo — opcional</Label>
-            <Select {...register('processo_id')}>
-              <option value="">Nenhum</option>
-              {processosSel.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.titulo}{p.numero_processo ? ` · ${p.numero_processo}` : ''}
-                </option>
-              ))}
-            </Select>
-            <p className="text-[10px] text-muted-foreground mt-0.5">Filtra por pessoa, se selecionada. Ao escolher o processo, a pessoa é preenchida automaticamente.</p>
-          </div>
+          <VinculoPickerCliente
+            label="Pessoa (cliente / fornecedor) — opcional"
+            value={watch('cliente_id') ?? ''}
+            onChange={id => setValue('cliente_id', id, { shouldValidate: true })}
+            hint="Sem seleção, o lançamento fica só do escritório. Cadastros em Pessoas."
+          />
+          <VinculoPickerProcesso
+            label="Processo — opcional"
+            value={watch('processo_id') ?? ''}
+            onChange={id => setValue('processo_id', id, { shouldValidate: true })}
+            clienteFiltroId={clienteFiltro}
+            hint="Com pessoa, a lista fica limitada a ela. A lupa abre a pesquisa ampliada."
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Status</Label>

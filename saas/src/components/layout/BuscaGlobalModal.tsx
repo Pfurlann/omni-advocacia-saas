@@ -85,32 +85,11 @@ export function BuscaGlobalModal({ open, onClose }: Props) {
               autoComplete="off"
             />
           </div>
-          <p className="text-[11px] text-muted-foreground mt-2 space-y-1">
-            <span className="block">
-              Mínimo {MIN} caracteres · atalhos:{' '}
-              <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">⌘K</kbd>
-              <span className="mx-0.5">·</span>
-              <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">Ctrl+K</kbd>
-              {` (e também `}
-              <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">⌘⇧K</kbd>
-              {` / `}
-              <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">Ctrl+Shift+K</kbd>
-              {`, mesmo efeito) · `}
-              <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">/</kbd> com o foco fora de campos
-              {' · '}
-              <kbd className="px-1 py-0.5 rounded bg-secondary text-[10px] font-mono">F3</kbd>
-              {'. '}
-            </span>
-            <span className="block text-muted-foreground/90">
-              Se o teclado não abrir, clique em <strong className="font-medium text-foreground/90">Busca global</strong> no menu lateral
-              ou no campo de pesquisa do topo. Alguns browsers capturam ⌘K; o macOS muitas vezes usa F3 para o sistema.
-            </span>
-          </p>
         </div>
 
         {!canSearch && (
           <p className="text-sm text-muted-foreground text-center py-8">
-            Digite para filtrar cadastros e processos em tempo real.
+            Digite pelo menos {MIN} caracteres para buscar pessoas e processos.
           </p>
         )}
 
