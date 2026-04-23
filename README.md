@@ -9,7 +9,7 @@ Repositório: [github.com/Pfurlann/omni-advocacia-saas](https://github.com/Pfurl
 ## Vercel
 
 1. **Importar** o repositório em [vercel.com/new](https://vercel.com/new) (ou ligar o Git ao projeto já criado pela CLI).
-2. **Root Directory:** `saas` (a app Next.js está dentro desta pasta).
+2. **Root Directory:** `saas` (a app Next.js está nesta pasta). O ficheiro `vercel.json` na **raiz do repositório** fixa isso; confirma também em *Settings → General → Root Directory* se importaste o projeto à mão.
 3. **Environment Variables** (mínimo para o *build* e a app): copiar de `saas/.env.local` ou de `saas/.env.example` — pelo menos:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
